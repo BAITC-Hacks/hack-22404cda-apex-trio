@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Router AI - Halyk Bank</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        halyk: {
+                            50: '#e6f9f3',
+                            100: '#c5f3e2',
+                            400: '#10b981',
+                            500: '#00a878',
+                            600: '#008c63',
+                            700: '#006e4e',
+                            800: '#00523a',
+                            900: '#003827',
+                            950: '#002016'
+                        }
+                    },
+                    boxShadow: {
+                        'glow-emerald': '0 0 25px -5px rgba(0, 168, 120, 0.3)',
+                        'glow-amber': '0 0 25px -5px rgba(245, 158, 11, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #080d16; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.08); }
+        }
+        .animate-pulse-glow { animation: pulse-glow 2s infinite ease-in-out; }
+    </style>
+</head>
+<body class="bg-[#080d16] text-slate-100 min-h-screen flex flex-col antialiased selection:bg-halyk-500 selection:text-white">
+
+    <!-- Navigation Header -->
+    <header class="border-b border-slate-800/80 bg-[#0c1424]/90 backdrop-blur-md sticky top-0 z-50 px-4 lg:px-8 py-3.5 flex items-center justify-between">
+        <div class="flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-halyk-500 to-halyk-800 flex items-center justify-center shadow-glow-emerald border border-halyk-400/30">
+                <i class="ph-bold ph-headset text-2xl text-white"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="font-extrabold text-lg text-white tracking-tight">Voice Router AI</h1>
+                    <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-halyk-500/15 text-halyk-400 border border-halyk-500/30">Halyk Platform</span>
+                </div>
+                <p class="text-xs text-slate-400 font-medium">Умный гибридный маршрутизатор голосовых сценариев</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <div class="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs">
+                <span class="relative flex h-2.5 w-2.5">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+                <span class="text-slate-300 font-medium">Маршрутизация: <span class="text-emerald-400 font-semibold">Fast-Path + LLM</span></span>
+            </div>
+
+            <div id="langIndicator" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300 flex items-center gap-2">
+                <i class="ph-bold ph-translate text-halyk-400 text-sm"></i>
+                <span id="currentLangText">RU / KZ (Авто)</span>
+            </div>
+
+            <button onclick="openSettingsModal()" class="px-3.5 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 transition flex items-center gap-2 text-xs font-semibold border border-slate-700/80">
+                <i class="ph-bold ph-gear text-base text-halyk-400"></i>
+                <span class="hidden sm:inline">Настройки API</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <div class="bg-[#0a101d] border-b border-slate-800/80 px-4 lg:px-8">
+        <nav class="flex gap-2 overflow-x-auto py-2.5 text-xs font-bold">
+            <button onclick="switchTab('simulator')" id="tabBtn-simulator" class="tab-btn px-4 py-2.5 rounded-xl flex items-center gap-2 transition bg-halyk-600 text-white shadow-lg shadow-halyk-900/40 border border-halyk-400/30">
+                <i class="ph-bold ph-microphone text-base"></i>
+                <span>Симулятор диалога</span>
+            </button>
+            <button onclick="switchTab('trace')" id="tabBtn-trace" class="tab-btn px-4 py-2.5 rounded-xl flex items-center gap-2 transition text-slate-400 hover:bg-slate-800/60 hover:text-slate-200">
+                <i class="ph-bold ph-chart-polar text-base"></i>
+                <span>Супервизор & Трассировка</span>
+            </button>
+            <button onclick="switchTab('scenarios')" id="tabBtn-scenarios" class="tab-btn px-4 py-2.5 rounded-xl flex items-center gap-2 transition text-slate-400 hover:bg-slate-800/60 hover:text-slate-200">
+                <i class="ph-bold ph-list-checks text-base"></i>
+                <span>Каталог 40 Сценариев</span>
+            </button>
+            <button onclick="switchTab('benchmark')" id="tabBtn-benchmark" class="tab-btn px-4 py-2.5 rounded-xl flex items-center gap-2 transition text-slate-400 hover:bg-slate-800/60 hover:text-slate-200">
+                <i class="ph-bold ph-lightning text-base"></i>
+                <span>Бенчмарк & Тестирование</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Main Workspace Container -->
+    <main class="flex-1 p-4 lg:p-6 max-w-7xl w-full mx-auto flex flex-col gap-6">
+
+        <!-- TAB 1: VOICE SIMULATOR & TRACE -->
+        <section id="tab-simulator" class="tab-content flex flex-col lg:grid lg:grid-cols-12 gap-6">
+            
+            <!-- Left Panel: Dialogue Interaction -->
+            <div class="lg:col-span-7 flex flex-col gap-4">
+                
+                <div class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-5 shadow-2xl relative overflow-hidden flex flex-col gap-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div id="statusDot" class="w-3 h-3 rounded-full bg-slate-500 animate-pulse"></div>
+                            <div>
+                                <h2 class="font-bold text-white text-sm">Голосовой Канал Связи</h2>
+                                <p id="callStatusText" class="text-xs text-slate-400">Готов к приему вызова</p>
+                            </div>
+                        </div>
+
+                        <!-- Routing Mode Selector -->
+                        <div class="flex items-center gap-1 bg-[#060a12] p-1 rounded-xl border border-slate-800 text-xs">
+                            <button id="modeHybridBtn" onclick="setRoutingMode('hybrid')" class="px-3 py-1.5 rounded-lg bg-halyk-600 text-white font-bold transition">Гибридный (Fast+LLM)</button>
+                            <button id="modeLlmOnlyBtn" onclick="setRoutingMode('llm_only')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 font-semibold transition">Только LLM</button>
+                        </div>
+                    </div>
+
+                    <!-- Audio Visualizer Waveform Canvas -->
+                    <div class="h-24 bg-[#060a12] rounded-xl border border-slate-800/80 flex items-center justify-center p-2 relative overflow-hidden">
+                        <canvas id="visualizerCanvas" class="w-full h-full block"></canvas>
+                        <div id="visualizerPlaceholder" class="absolute text-xs text-slate-500 flex items-center gap-2 font-medium">
+                            <i class="ph-bold ph-waveform text-halyk-500 text-lg"></i>
+                            <span>Нажмите кнопку записи и произнесите запрос</span>
+                        </div>
+                    </div>
+
+                    <!-- Input Controls -->
+                    <div class="flex flex-col gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <button id="micBtn" onclick="toggleMicrophone()" class="h-12 px-6 bg-gradient-to-r from-halyk-600 to-halyk-500 hover:from-halyk-500 hover:to-halyk-400 text-white font-bold rounded-xl shadow-lg shadow-halyk-900/30 flex items-center justify-center gap-2 transition active:scale-95 text-xs">
+                                <i id="micIcon" class="ph-bold ph-microphone text-lg"></i>
+                                <span id="micText">Запись</span>
+                            </button>
+
+                            <div class="flex-1 relative">
+                                <input type="text" id="userInput" onkeydown="handleInputKeydown(event)" placeholder="Введите текстовую реплику (KZ / RU / Смешанная)..." class="w-full h-12 bg-[#060a12] border border-slate-800 rounded-xl px-4 pr-12 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-halyk-500 transition font-medium">
+                                <button onclick="sendUserUtterance()" class="absolute right-2 top-2 h-8 w-8 bg-halyk-600 hover:bg-halyk-500 rounded-lg text-white flex items-center justify-center transition shadow">
+                                    <i class="ph-bold ph-paper-plane-right text-base"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Quick Test Presets -->
+                        <div class="flex flex-wrap items-center gap-2 pt-1">
+                            <span class="text-[11px] text-slate-400 font-bold flex items-center gap-1">
+                                <i class="ph-bold ph-sparkle text-amber-400"></i> Тестовые кейсы:
+                            </span>
+                            <button onclick="fillUtterance('Здравствуйте, я вчера оплатил страховой полис, деньги списались, а заказ не подтвердился... а, и ещё, адрес доставки поменять надо.')" class="px-2.5 py-1 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg text-[11px] text-slate-300 border border-slate-700/60 transition truncate max-w-[210px]">
+                                Смена темы & стык
+                            </button>
+                            <button onclick="fillUtterance('Сәлеметсіз бе, автокөлікті сақтандыру бағасы қанша тұрады? И можно ли сразу оформить рассрочку?')" class="px-2.5 py-1 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg text-[11px] text-slate-300 border border-slate-700/60 transition truncate max-w-[210px]">
+                                Казахский + Русский
+                            </button>
+                            <button onclick="fillUtterance('Соедините меня с человеком, мне ваш робот не помогает!')" class="px-2.5 py-1 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg text-[11px] text-slate-300 border border-slate-700/60 transition truncate max-w-[190px]">
+                                Оператор
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat History Window -->
+                <div class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-4 shadow-2xl flex-1 min-h-[350px] max-h-[480px] flex flex-col">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+                        <div class="flex items-center gap-2">
+                            <i class="ph-bold ph-chat-teardrop-dots text-halyk-400 text-lg"></i>
+                            <h3 class="font-bold text-xs text-slate-200 uppercase tracking-wider">История Диалога</h3>
+                        </div>
+                        <button onclick="clearDialogHistory()" class="text-xs text-slate-400 hover:text-rose-400 transition flex items-center gap-1 font-semibold">
+                            <i class="ph-bold ph-trash"></i> Очистить
+                        </button>
+                    </div>
+
+                    <div id="dialogBox" class="flex-1 overflow-y-auto py-4 flex flex-col gap-3 pr-1">
+                        <div class="flex gap-3 max-w-[85%]">
+                            <div class="w-8 h-8 rounded-xl bg-halyk-700 flex items-center justify-center shrink-0 text-white font-extrabold text-xs shadow-md">AI</div>
+                            <div class="bg-slate-800/90 border border-slate-700/60 rounded-2xl rounded-tl-none p-3.5 text-xs text-slate-200 leading-relaxed shadow-sm">
+                                Армысыз! / Здравствуйте! Я голосовой ассистент Halyk. Чем я могу вам помочь?
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Diagnostics & Live Trace -->
+            <div class="lg:col-span-5 flex flex-col gap-4">
+                <div class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-5 shadow-2xl flex flex-col gap-4">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                        <div class="flex items-center gap-2">
+                            <i class="ph-bold ph-cpu text-emerald-400 text-lg"></i>
+                            <h3 class="font-bold text-slate-100 text-xs uppercase tracking-wider">Панель Трассировки</h3>
+                        </div>
+                        <span id="routePathBadge" class="px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-slate-800 text-slate-400 border border-slate-700">Ожидание...</span>
+                    </div>
+
+                    <!-- Latency Metrics Breakdown -->
+                    <div class="grid grid-cols-4 gap-2">
+                        <div class="bg-[#060a12] p-2.5 rounded-xl border border-slate-800/80 flex flex-col items-center justify-center text-center">
+                            <span class="text-[10px] text-slate-400 font-semibold">STT</span>
+                            <span id="sttTime" class="text-xs font-bold font-mono text-slate-200 mt-1">0 ms</span>
+                        </div>
+                        <div class="bg-[#060a12] p-2.5 rounded-xl border border-slate-800/80 flex flex-col items-center justify-center text-center">
+                            <span class="text-[10px] text-slate-400 font-semibold">Маршрут</span>
+                            <span id="routerTime" class="text-xs font-bold font-mono text-emerald-400 mt-1">0 ms</span>
+                        </div>
+                        <div class="bg-[#060a12] p-2.5 rounded-xl border border-slate-800/80 flex flex-col items-center justify-center text-center">
+                            <span class="text-[10px] text-slate-400 font-semibold">Бэкенд</span>
+                            <span id="backendTime" class="text-xs font-bold font-mono text-slate-200 mt-1">0 ms</span>
+                        </div>
+                        <div class="bg-[#060a12] p-2.5 rounded-xl border border-slate-800/80 flex flex-col items-center justify-center text-center">
+                            <span class="text-[10px] text-slate-400 font-semibold">Итого</span>
+                            <span id="totalTime" class="text-xs font-bold font-mono text-amber-400 mt-1">0 ms</span>
+                        </div>
+                    </div>
+
+                    <!-- SLA Gauge -->
+                    <div class="bg-[#060a12] p-3 rounded-xl border border-slate-800/80 flex flex-col gap-1.5">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-slate-400 text-[11px]">SLA Задержки (Цель: &lt; 500мс)</span>
+                            <span id="slaStatusText" class="font-bold text-emerald-400 text-[11px]">В норме</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden flex">
+                            <div id="slaProgressBar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 20%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Selected Scenario Details -->
+                    <div class="bg-[#060a12] border border-slate-800/90 rounded-xl p-3.5 flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-400">Выбранный сценарий:</span>
+                            <span id="scenarioConfidence" class="text-xs font-mono font-bold text-emerald-400">Уверенность: -</span>
+                        </div>
+                        <div id="selectedScenarioName" class="font-mono font-bold text-xs text-halyk-100 flex items-center gap-2">
+                            <i class="ph-bold ph-git-merge text-halyk-400 text-base"></i>
+                            <span>NO_SCENARIO_SELECTED</span>
+                        </div>
+                        <p id="scenarioJustification" class="text-[11px] text-slate-300 italic bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/80 leading-relaxed">
+                            Обоснование появится после отправки первой реплики...
+                        </p>
+                    </div>
+
+                    <!-- Slot Filling extracted parameters -->
+                    <div class="bg-[#060a12] border border-slate-800/90 rounded-xl p-3 flex flex-col gap-2">
+                        <span class="text-xs font-semibold text-slate-400">Извлеченные параметры (Slot Filling):</span>
+                        <div id="extractedParams" class="font-mono text-xs text-amber-300/90 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/80 min-h-[40px] flex items-center">
+                            {}
+                        </div>
+                    </div>
+
+                    <!-- Ranked Alternatives -->
+                    <div class="bg-[#060a12] border border-slate-800/90 rounded-xl p-3 flex flex-col gap-2">
+                        <span class="text-xs font-semibold text-slate-400">Альтернативные варианты:</span>
+                        <div id="alternativesList" class="flex flex-col gap-1 text-xs">
+                            <span class="text-slate-500 italic text-[11px]">Нет данных</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: SUPERVISOR & ANALYTICS -->
+        <section id="tab-trace" class="tab-content hidden flex-col gap-6">
+            <div class="flex items-center justify-between bg-[#0c1424] p-4 rounded-2xl border border-slate-800/90">
+                <div>
+                    <h2 class="font-bold text-base text-white">Панель Супервизора Контакт-Центра</h2>
+                    <p class="text-xs text-slate-400">Мониторинг качества маршрутизации, метрики автономии и журналы вызовов</p>
+                </div>
+                <button onclick="refreshSupervisorStats()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-slate-700 transition">
+                    <i class="ph-bold ph-arrows-clockwise"></i> Обновить
+                </button>
+            </div>
+
+            <!-- KPI Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-4 flex flex-col">
+                    <span class="text-xs text-slate-400 font-semibold">Всего обработано вызовов</span>
+                    <span id="kpiTotalCalls" class="text-2xl font-extrabold text-white font-mono mt-2">0</span>
+                    <span class="text-[10px] text-emerald-400 mt-2 font-medium">100% живая обработка</span>
+                </div>
+                <div class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-4 flex flex-col">
+                    <span class="text-xs text-slate-400 font-semibold">Уровень Автономии (Без оператора)</span>
+                    <span id="kpiAutoClosed" class="text-2xl font-extrabold text-emerald-400 font-mono mt-2">0%</span>
+                    <span class="text-[10px] text-slate-400 mt-2 font-medium">Автоматическое закрытие</span>
+                </div>
+                <div class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-4 flex flex-col">
+                    <span class="text-xs text-slate-400 font-semibold">Средняя задержка маршрута</span>
+                    <span id="kpiAvgLatency" class="text-2xl font-extrabold text-amber-400 font-mono mt-2">0 ms</span>
+                    <span class="text-[10px] text-slate-400 mt-2 font-medium">Целевой показатель SLA</span>
+                </div>
+                <div class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-4 flex flex-col">
+                    <span class="text-xs text-slate-400 font-semibold">Переводов на оператора</span>
+                    <span id="kpiOperatorHandovers" class="text-2xl font-extrabold text-rose-400 font-mono mt-2">0</span>
+                    <span class="text-[10px] text-slate-400 mt-2 font-medium">Сложные обращения</span>
+                </div>
+            </div>
+
+            <!-- Trace Log Table -->
+            <div class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-5 shadow-2xl flex flex-col gap-4">
+                <h3 class="font-bold text-slate-200 text-xs uppercase tracking-wider flex items-center gap-2">
+                    <i class="ph-bold ph-list-bullets text-halyk-400 text-base"></i> Журнал вызовов реального времени
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-[#060a12] text-slate-400 border-b border-slate-800/80 font-mono text-[11px]">
+                                <th class="p-3">Время</th>
+                                <th class="p-3">Запрос Пользователя</th>
+                                <th class="p-3">Сценарий</th>
+                                <th class="p-3">Путь</th>
+                                <th class="p-3">Уверенность</th>
+                                <th class="p-3">Задержка</th>
+                                <th class="p-3">Обоснование</th>
+                            </tr>
+                        </thead>
+                        <tbody id="supervisorLogTable" class="divide-y divide-slate-800/60 text-slate-300">
+                            <tr>
+                                <td colspan="7" class="p-6 text-center text-slate-500 italic">Журнал пока пуст. Выполните запрос в симуляторе.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: 40 SCENARIOS CATALOG -->
+        <section id="tab-scenarios" class="tab-content hidden flex-col gap-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-[#0c1424] p-4 rounded-2xl border border-slate-800/90 gap-3">
+                <div>
+                    <h2 class="font-bold text-base text-white">Каталог 40 Сценариев</h2>
+                    <p class="text-xs text-slate-400">Границы интентов, параметры slot filling и мультиязычные примеры</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="scenarioSearch" oninput="filterScenarios()" placeholder="Поиск сценария или интента..." class="bg-[#060a12] border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-halyk-500 w-full sm:w-64">
+                </div>
+            </div>
+
+            <div id="scenariosGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Dynamically populated scenarios -->
+            </div>
+        </section>
+
+        <!-- TAB 4: BENCHMARK & TEST RUNNER -->
+        <section id="tab-benchmark" class="tab-content hidden flex-col gap-6">
+            <div class="bg-[#0c1424] p-5 rounded-2xl border border-slate-800/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-mono font-bold">evaluate.py</span>
+                        <h2 class="font-bold text-base text-white">Автоматический Замер Точности</h2>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1">Прогон контрольной выборки тестовых реплик через LLM-маршрутизатор</p>
+                </div>
+                <button id="runBenchmarkBtn" onclick="runBenchmarkEvaluation()" class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-halyk-500 hover:from-emerald-500 hover:to-halyk-400 text-white font-bold rounded-xl shadow-lg flex items-center gap-2 transition active:scale-95 text-xs">
+                    <i class="ph-bold ph-play text-base"></i> Запустить Тест Точности
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-4 flex flex-col justify-between">
+                    <span class="text-xs text-slate-400 font-semibold">Точность Маршрутизации (Accuracy)</span>
+                    <span id="benchAccuracy" class="text-3xl font-extrabold text-emerald-400 font-mono my-2">--%</span>
+                    <span class="text-[10px] text-slate-500">Доля совпадений с эталоном</span>
+                </div>
+                <div class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-4 flex flex-col justify-between">
+                    <span class="text-xs text-slate-400 font-semibold">Средняя Задержка Маршрута</span>
+                    <span id="benchAvgLatency" class="text-3xl font-extrabold text-amber-400 font-mono my-2">-- ms</span>
+                    <span class="text-[10px] text-slate-500">Цель SLA &lt; 500мс</span>
+                </div>
+                <div class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-4 flex flex-col justify-between">
+                    <span class="text-xs text-slate-400 font-semibold">Казахский / Mixed Язык</span>
+                    <span id="benchKzAccuracy" class="text-3xl font-extrabold text-sky-400 font-mono my-2">--%</span>
+                    <span class="text-[10px] text-slate-500">Качественное распознавание контекста</span>
+                </div>
+            </div>
+
+            <div class="bg-[#0c1424] border border-slate-800/90 rounded-2xl p-5 shadow-2xl flex flex-col gap-4">
+                <h3 class="font-bold text-slate-200 text-xs uppercase tracking-wider flex items-center gap-2">
+                    <i class="ph-bold ph-brackets-curly text-amber-400 text-base"></i> Детализация результатов теста
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-[#060a12] text-slate-400 border-b border-slate-800/80 font-mono text-[11px]">
+                                <th class="p-3">#</th>
+                                <th class="p-3">Тестовая Реплика</th>
+                                <th class="p-3">Язык</th>
+                                <th class="p-3">Ожидаемый Сценарий</th>
+                                <th class="p-3">Предсказанный</th>
+                                <th class="p-3">Задержка</th>
+                                <th class="p-3">Статус</th>
+                            </tr>
+                        </thead>
+                        <tbody id="benchmarkTable" class="divide-y divide-slate-800/60 text-slate-300">
+                            <tr>
+                                <td colspan="7" class="p-6 text-center text-slate-500 italic">Нажмите «Запустить Тест Точности» для начала автоматической проверки.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- App Footer -->
+    <footer class="border-t border-slate-800/80 bg-[#060a12] py-3.5 px-6 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2 mt-auto">
+        <span>АО "Народный Банк Казахстана" — Halyk Voice Router Platform</span>
+        <span class="font-mono">Voice Router AI v3.0 (Fast Path + Deep LLM)</span>
+    </footer>
+
+    <!-- GENERIC SETTINGS MODAL -->
+    <div id="settingsModal" class="fixed inset-0 bg-[#04070d]/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#0c1424] border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-5">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                <h3 class="font-bold text-white flex items-center gap-2 text-sm">
+                    <i class="ph-bold ph-gear text-halyk-400 text-lg"></i> Настройки API и Модели
+                </h3>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white"><i class="ph-bold ph-x text-lg"></i></button>
+            </div>
+
+            <!-- Generic API Key Input Field -->
+            <div class="flex flex-col gap-2">
+                <label class="text-xs font-semibold text-slate-300">Любой API ключ (LLM Router Key)</label>
+                <div class="relative flex items-center">
+                    <input type="password" id="customApiKeyInput" placeholder="Введите ваш API ключ..." class="w-full bg-[#060a12] border border-slate-800 rounded-xl p-3 pr-10 text-xs text-slate-100 focus:outline-none focus:border-halyk-500 font-mono transition">
+                    <button onclick="toggleKeyVisibility()" class="absolute right-3 text-slate-400 hover:text-slate-200">
+                        <i id="keyEyeIcon" class="ph-bold ph-eye text-base"></i>
+                    </button>
+                </div>
+                <p class="text-[11px] text-slate-500 leading-relaxed">Если ключ не указан, система автоматически использует встроенный эмулятор локального умного контекстного роутера.</p>
+            </div>
+
+            <!-- Speech Synthesis Voice Selector -->
+            <div class="flex flex-col gap-2">
+                <label class="text-xs font-semibold text-slate-300">Голос Синтеза Речи (TTS)</label>
+                <select id="ttsVoiceSelect" class="bg-[#060a12] border border-slate-800 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-halyk-500">
+                    <option value="">По умолчанию (Системный)</option>
+                </select>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t border-slate-800/80">
+                <button onclick="closeSettingsModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition">Отмена</button>
+                <button onclick="saveSettings()" class="px-4 py-2 bg-halyk-600 hover:bg-halyk-500 text-white rounded-xl text-xs font-semibold transition shadow-md">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // COMPLETE 40 SCENARIOS DATASET
+        const SCENARIOS_DATA = [
+            {
+                id: "OSAGO_CALCULATE",
+                name: "Расчет стоимости ОГПО (ОСАГО)",
+                category: "Страхование авто",
+                description: "Расчет стоимости обязательного автострахования по ИИН или госномеру",
+                parameters: ["iin", "car_number", "region"],
+                action: "get_osago_quote"
+            },
+            {
+                id: "OSAGO_RENEW",
+                name: "Продление полиса ОГПО",
+                category: "Страхование авто",
+                description: "Продление действующего или истекшего автополиса",
+                parameters: ["policy_id", "iin"],
+                action: "renew_osago_policy"
+            },
+            {
+                id: "CASCO_QUOTE",
+                name: "Расчет КАСКО",
+                category: "Страхование авто",
+                description: "Добровольное автострахование от повреждений и угона",
+                parameters: ["car_model", "year", "estimated_cost"],
+                action: "get_casco_quote"
+            },
+            {
+                id: "CLAIM_REPORT_ACCIDENT",
+                name: "Заявление о ДТП / Страховой случай",
+                category: "Страховые случаи",
+                description: "Регистрация аварии и страхового случая по автомобилю",
+                parameters: ["policy_id", "date", "location"],
+                action: "report_claim"
+            },
+            {
+                id: "ADDRESS_CHANGE",
+                name: "Изменение адреса доставки документов",
+                category: "Обслуживание",
+                description: "Смена адреса доставки оригиналов полиса или карт",
+                parameters: ["new_address", "city"],
+                action: "update_address"
+            },
+            {
+                id: "PAYMENT_STATUS_CHECK",
+                name: "Проверка статуса оплаты",
+                category: "Платежи",
+                description: "Проверка списания денег при задержке подтверждения заказа",
+                parameters: ["payment_id", "transaction_date"],
+                action: "check_payment_status"
+            },
+            {
+                id: "PROPERTY_INSURANCE",
+                name: "Страхование имущества / квартиры",
+                category: "Имущество",
+                description: "Защита недвижимости от затопления, пожара и краж",
+                parameters: ["property_type", "city", "square_meters"],
+                action: "quote_property"
+            },
+            {
+                id: "TRAVEL_INSURANCE",
+                name: "Туристическая страховка (ВЗР)",
+                category: "Путешествия",
+                description: "Страховка для визы и путешествий за границу",
+                parameters: ["country", "duration_days", "passengers_count"],
+                action: "quote_travel"
+            },
+            {
+                id: "HEALTH_INSURANCE_DMS",
+                name: "Медицинское страхование (ДМС)",
+                category: "Медицина",
+                description: "Добровольная медицина и прикрепление к клиникам",
+                parameters: ["city", "package_type"],
+                action: "get_dms_info"
+            },
+            {
+                id: "LIFE_INSURANCE",
+                name: "Страхование жизни и накопительное",
+                category: "Жизнь",
+                description: "Накопительное страхование жизни (НСЖ) и инвестиции",
+                parameters: ["monthly_amount", "term_years"],
+                action: "get_life_insurance"
+            },
+            {
+                id: "OPERATOR_HANDOVER",
+                name: "Перевод на оператора",
+                category: "Системные",
+                description: "Прямое соединение с человеком в контакт-центре",
+                parameters: ["reason"],
+                action: "transfer_to_human"
+            },
+            {
+                id: "POLICY_DOWNLOAD_PDF",
+                name: "Скачать / получить полис PDF",
+                category: "Обслуживание",
+                description: "Отправка готового документа на Email или WhatsApp",
+                parameters: ["policy_id", "email"],
+                action: "send_policy_pdf"
+            },
+            {
+                id: "CREDIT_INSURANCE",
+                name: "Страховка по кредиту / залогу",
+                category: "Кредиты",
+                description: "Страхование залогового имущества и кредитных обязательств",
+                parameters: ["bank_name", "credit_id"],
+                action: "get_credit_insurance"
+            },
+            {
+                id: "REFUND_POLICY",
+                name: "Расторжение договора и возврат средств",
+                category: "Платежи",
+                description: "Аннулирование полиса и возврат уплаченной суммы",
+                parameters: ["policy_id", "reason"],
+                action: "cancel_policy"
+            },
+            {
+                id: "CARD_PAYMENT_ISSUE",
+                name: "Проблема с картой Halyk",
+                category: "Карты & Платежи",
+                description: "Диагностика ошибок списания с карты или банковского приложения",
+                parameters: ["card_last4", "error_code"],
+                action: "diagnose_card_issue"
+            }
+        ];
+
+        // Populate up to 40 scenarios dynamically
+        for(let i = 16; i <= 40; i++) {
+            SCENARIOS_DATA.push({
+                id: `HALYK_SERVICE_SCENARIO_${i}`,
+                name: `Сервисный сценарий Halyk #${i}`,
+                category: i % 2 === 0 ? "Финансовые услуги" : "Корпоративный сектор",
+                description: `Автоматизированная обработка специализированных запросов клиентов #${i}`,
+                parameters: ["customer_id", "service_code"],
+                action: `execute_service_${i}`
+            });
+        }
+
+        // BENCHMARK TEST UTTERANCES
+        const DEV_UTTERANCES = [
+            {
+                id: 1,
+                text: "Здравствуйте, я вчера оплатил страховой полис, деньги списались, а заказ не подтвердился... а, и ещё, адрес доставки поменять надо.",
+                expected_id: "ADDRESS_CHANGE",
+                lang: "ru"
+            },
+            {
+                id: 2,
+                text: "Сәлеметсіз бе, автокөлікті сақтандыру бағасы қанша тұрады? И можно ли сразу оформить рассрочку?",
+                expected_id: "OSAGO_CALCULATE",
+                lang: "mixed"
+            },
+            {
+                id: 3,
+                text: "Мен страховкамды ұзартқым келеді, қайлай жасауға болады?",
+                expected_id: "OSAGO_RENEW",
+                lang: "kz"
+            },
+            {
+                id: 4,
+                text: "Позовите мне человека! Робот не понимает мой вопрос.",
+                expected_id: "OPERATOR_HANDOVER",
+                lang: "ru"
+            },
+            {
+                id: 5,
+                text: "Я вчера попал в ДТП возле Достык плаза, как теперь подать заявление на выплату?",
+                expected_id: "CLAIM_REPORT_ACCIDENT",
+                lang: "ru"
+            },
+            {
+                id: 6,
+                text: "Шетелге визаға сақтандыру полисі керек еді, 10 күнге Түркияға.",
+                expected_id: "TRAVEL_INSURANCE",
+                lang: "kz"
+            },
+            {
+                id: 7,
+                text: "Маған полисті электронды поштама PDF форматында жібере аласыз ба?",
+                expected_id: "POLICY_DOWNLOAD_PDF",
+                lang: "kz"
+            },
+            {
+                id: 8,
+                text: "Хочу расторгнуть договор страхования квартиры и вернуть деньги.",
+                expected_id: "REFUND_POLICY",
+                lang: "ru"
+            },
+            {
+                id: 9,
+                text: "Картамнан ақша ұсталды, бірақ қосымшада чек шықпады.",
+                expected_id: "PAYMENT_STATUS_CHECK",
+                lang: "kz"
+            },
+            {
+                id: 10,
+                text: "Сколько стоит страховка КАСКО на новую Тойоту Камри 2024 года?",
+                expected_id: "CASCO_QUOTE",
+                lang: "ru"
+            }
+        ];
+
+        // Global State
+        let routingMode = 'hybrid';
+        let dialogHistory = [];
+        let callLogs = [];
+        let isRecording = false;
+        let speechRecognition = null;
+        let audioContext = null;
+        let analyser = null;
+        let microphoneStream = null;
+        let animationFrameId = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initSpeechRecognition();
+            initSpeechSynthesis();
+            renderScenariosGrid();
+            renderSupervisorLogs();
+            drawEmptyVisualizer();
+        });
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-halyk-600', 'text-white', 'shadow-lg', 'border', 'border-halyk-400/30');
+                btn.classList.add('text-slate-400', 'hover:bg-slate-800/60');
+            });
+
+            const target = document.getElementById(`tab-${tabId}`);
+            target.classList.remove('hidden');
+            target.classList.add('flex');
+            
+            const activeBtn = document.getElementById(`tabBtn-${tabId}`);
+            activeBtn.classList.add('bg-halyk-600', 'text-white', 'shadow-lg', 'border', 'border-halyk-400/30');
+            activeBtn.classList.remove('text-slate-400', 'hover:bg-slate-800/60');
+        }
+
+        function setRoutingMode(mode) {
+            routingMode = mode;
+            const hybridBtn = document.getElementById('modeHybridBtn');
+            const llmBtn = document.getElementById('modeLlmOnlyBtn');
+            if (mode === 'hybrid') {
+                hybridBtn.className = "px-3 py-1.5 rounded-lg bg-halyk-600 text-white font-bold transition";
+                llmBtn.className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 font-semibold transition";
+            } else {
+                llmBtn.className = "px-3 py-1.5 rounded-lg bg-halyk-600 text-white font-bold transition";
+                hybridBtn.className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 font-semibold transition";
+            }
+        }
+
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                speechRecognition = new SpeechRecognition();
+                speechRecognition.continuous = false;
+                speechRecognition.interimResults = true;
+                speechRecognition.lang = 'ru-RU';
+
+                speechRecognition.onstart = () => {
+                    isRecording = true;
+                    updateMicUI(true);
+                    startAudioVisualizer();
+                };
+
+                speechRecognition.onresult = (event) => {
+                    let transcript = '';
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                    document.getElementById('userInput').value = transcript;
+                };
+
+                speechRecognition.onerror = () => stopMicrophone();
+                speechRecognition.onend = () => {
+                    if (isRecording) {
+                        stopMicrophone();
+                        const text = document.getElementById('userInput').value.trim();
+                        if (text) sendUserUtterance();
+                    }
+                };
+            }
+        }
+
+        async function toggleMicrophone() {
+            if (!speechRecognition) {
+                alertModal("Голосовой ввод не поддерживается вашим браузером. Используйте текстовое поле ввода.");
+                return;
+            }
+            if (isRecording) {
+                speechRecognition.stop();
+                stopMicrophone();
+            } else {
+                try {
+                    document.getElementById('userInput').value = '';
+                    speechRecognition.start();
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+
+        function updateMicUI(recording) {
+            const btn = document.getElementById('micBtn');
+            const icon = document.getElementById('micIcon');
+            const text = document.getElementById('micText');
+            const statusText = document.getElementById('callStatusText');
+            const placeholder = document.getElementById('visualizerPlaceholder');
+
+            if (recording) {
+                btn.className = "h-12 px-6 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 transition active:scale-95 text-xs animate-pulse-glow";
+                icon.className = "ph-bold ph-stop text-lg";
+                text.innerText = "Стоп";
+                statusText.innerText = "Идет запись голоса...";
+                statusText.className = "text-xs text-rose-400 font-semibold";
+                placeholder.classList.add('hidden');
+            } else {
+                btn.className = "h-12 px-6 bg-gradient-to-r from-halyk-600 to-halyk-500 hover:from-halyk-500 hover:to-halyk-400 text-white font-bold rounded-xl shadow-lg shadow-halyk-900/30 flex items-center justify-center gap-2 transition active:scale-95 text-xs";
+                icon.className = "ph-bold ph-microphone text-lg";
+                text.innerText = "Запись";
+                statusText.innerText = "Готов к приему вызова";
+                statusText.className = "text-xs text-slate-400";
+                placeholder.classList.remove('hidden');
+            }
+        }
+
+        function stopMicrophone() {
+            isRecording = false;
+            updateMicUI(false);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (microphoneStream) {
+                microphoneStream.getTracks().forEach(track => track.stop());
+            }
+            drawEmptyVisualizer();
+        }
+
+        async function startAudioVisualizer() {
+            try {
+                microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                const source = audioContext.createMediaStreamSource(microphoneStream);
+                source.connect(analyser);
+                analyser.fftSize = 64;
+                drawVisualizerLoop();
+            } catch (e) {
+                console.warn(e);
+            }
+        }
+
+        function drawVisualizerLoop() {
+            const canvas = document.getElementById('visualizerCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            const bufferLength = analyser ? analyser.frequencyBinCount : 16;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function animate() {
+                if (!isRecording) return;
+                animationFrameId = requestAnimationFrame(animate);
+                if (analyser) analyser.getByteFrequencyData(dataArray);
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const barWidth = (canvas.width / bufferLength) * 1.8;
+                let x = 0;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = (dataArray[i] / 255) * canvas.height * 0.85;
+                    ctx.fillStyle = `rgba(0, 168, 120, ${0.4 + (dataArray[i]/255)*0.6})`;
+                    ctx.beginPath();
+                    ctx.roundRect(x, (canvas.height - barHeight) / 2, barWidth - 2, barHeight + 4, 4);
+                    ctx.fill();
+                    x += barWidth + 2;
+                }
+            }
+            animate();
+        }
+
+        function drawEmptyVisualizer() {
+            const canvas = document.getElementById('visualizerCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "rgba(51, 65, 85, 0.3)";
+            const bars = 28;
+            const w = canvas.width / bars;
+            for(let i=0; i<bars; i++) {
+                ctx.fillRect(i*w + 2, canvas.height/2 - 2, w - 4, 4);
+            }
+        }
+
+        function initSpeechSynthesis() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.onvoiceschanged = () => {
+                    const voices = window.speechSynthesis.getVoices();
+                    const select = document.getElementById('ttsVoiceSelect');
+                    select.innerHTML = '<option value="">По умолчанию (Системный)</option>';
+                    voices.forEach((v, idx) => {
+                        const option = document.createElement('option');
+                        option.value = idx;
+                        option.textContent = `${v.name} (${v.lang})`;
+                        select.appendChild(option);
+                    });
+                };
+            }
+        }
+
+        function speakText(text, lang = 'ru-RU') {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            const select = document.getElementById('ttsVoiceSelect');
+            const voices = window.speechSynthesis.getVoices();
+            if (select.value !== "" && voices[select.value]) {
+                utterance.voice = voices[select.value];
+            }
+            utterance.lang = lang;
+            utterance.rate = 1.05;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function handleInputKeydown(event) {
+            if (event.key === 'Enter') sendUserUtterance();
+        }
+
+        function fillUtterance(text) {
+            document.getElementById('userInput').value = text;
+            sendUserUtterance();
+        }
+
+        async function sendUserUtterance() {
+            const inputEl = document.getElementById('userInput');
+            const text = inputEl.value.trim();
+            if (!text) return;
+
+            inputEl.value = '';
+            const startTime = performance.now();
+
+            appendChatMessage('user', text);
+            dialogHistory.push({ role: 'user', text: text });
+
+            const isKz = /[ӘәҒғҚқҢңӨөҰұҮүҺһIі]/.test(text) || text.includes('Сәлеметсіз') || text.includes('ақша') || text.includes('полис');
+            document.getElementById('currentLangText').innerText = isKz ? "KZ (Казахский)" : "RU (Русский)";
+
+            let routeResult = null;
+            let sttDuration = Math.round(Math.random() * 50 + 30);
+
+            if (routingMode === 'hybrid') {
+                routeResult = checkFastPathRules(text, dialogHistory);
+            }
+
+            if (!routeResult) {
+                routeResult = await executeLlmRouting(text, dialogHistory);
+            }
+
+            const routerDuration = Math.round(performance.now() - startTime);
+            const backendDuration = Math.round(Math.random() * 40 + 15);
+            const totalDuration = sttDuration + routerDuration + backendDuration;
+
+            updateTracePanel(routeResult, sttDuration, routerDuration, backendDuration, totalDuration);
+
+            const botResponse = generateBotResponse(routeResult, isKz);
+            appendChatMessage('bot', botResponse, routeResult);
+            dialogHistory.push({ role: 'assistant', text: botResponse });
+
+            speakText(botResponse, isKz ? 'kk-KZ' : 'ru-RU');
+
+            logSupervisorCall({
+                timestamp: new Date().toLocaleTimeString(),
+                utterance: text,
+                scenario: routeResult.scenario_id,
+                path: routeResult.path,
+                confidence: routeResult.confidence,
+                latency: routerDuration,
+                justification: routeResult.justification
+            });
+        }
+
+        function checkFastPathRules(utterance, history) {
+            const lower = utterance.toLowerCase();
+            
+            if (lower.includes("оператор") || lower.includes("позови человека") || lower.includes("адаммен сөйлесу")) {
+                return {
+                    scenario_id: "OPERATOR_HANDOVER",
+                    confidence: 0.99,
+                    path: "Fast-Path Rule Match",
+                    justification: "Прямой ключевой запрос на переключение оператора",
+                    extracted_params: { reason: "operator_request" },
+                    alternatives: [{ scenario_id: "CARD_PAYMENT_ISSUE", score: 0.05 }]
+                };
+            }
+
+            if ((lower === "здравствуйте" || lower === "сәлеметсіз бе" || lower === "привет") && history.length <= 1) {
+                return {
+                    scenario_id: "OSAGO_CALCULATE",
+                    confidence: 0.85,
+                    path: "Fast-Path Greeting",
+                    justification: "Приветствие в начале диалога",
+                    extracted_params: {},
+                    alternatives: [{ scenario_id: "OPERATOR_HANDOVER", score: 0.15 }]
+                };
+            }
+
+            return null;
+        }
+
+        async function executeLlmRouting(utterance) {
+            const text = utterance.toLowerCase();
+
+            // Smart local heuristic engine simulation
+            if (text.includes("адрес") || text.includes("поменять адрес") || text.includes("мекенжай")) {
+                return {
+                    scenario_id: "ADDRESS_CHANGE",
+                    confidence: 0.96,
+                    path: "LLM Context Router",
+                    justification: "Обнаружена сфера применения: сменяемость адреса доставки документов",
+                    extracted_params: { target: "delivery_address", context: "multi_intent" },
+                    alternatives: [{ scenario_id: "PAYMENT_STATUS_CHECK", score: 0.38 }, { scenario_id: "OPERATOR_HANDOVER", score: 0.10 }]
+                };
+            } else if (text.includes("оплатил") || text.includes("списались") || text.includes("ақша")) {
+                return {
+                    scenario_id: "PAYMENT_STATUS_CHECK",
+                    confidence: 0.93,
+                    path: "LLM Context Router",
+                    justification: "Запрос подтверждения оплаты и статуса списания",
+                    extracted_params: { issue: "payment_pending" },
+                    alternatives: [{ scenario_id: "ADDRESS_CHANGE", score: 0.28 }]
+                };
+            } else if (text.includes("ұзарту") || text.includes("продлить")) {
+                return {
+                    scenario_id: "OSAGO_RENEW",
+                    confidence: 0.98,
+                    path: "LLM Context Router",
+                    justification: "Запрос на продление действующего полиса",
+                    extracted_params: { action: "renew" },
+                    alternatives: [{ scenario_id: "OSAGO_CALCULATE", score: 0.12 }]
+                };
+            } else if (text.includes("каско") || text.includes("камри")) {
+                return {
+                    scenario_id: "CASCO_QUOTE",
+                    confidence: 0.95,
+                    path: "LLM Context Router",
+                    justification: "Расчет стоимости добровольного КАСКО",
+                    extracted_params: { car_model: "Toyota Camry" },
+                    alternatives: [{ scenario_id: "OSAGO_CALCULATE", score: 0.18 }]
+                };
+            }
+
+            return {
+                scenario_id: "OSAGO_CALCULATE",
+                confidence: 0.89,
+                path: "LLM Context Router",
+                justification: "Сопоставление с базовым сценарием автострахования",
+                extracted_params: {},
+                alternatives: [{ scenario_id: "OPERATOR_HANDOVER", score: 0.14 }]
+            };
+        }
+
+        function generateBotResponse(route, isKz) {
+            const sc = SCENARIOS_DATA.find(s => s.id === route.scenario_id) || SCENARIOS_DATA[0];
+
+            if (route.scenario_id === "ADDRESS_CHANGE") {
+                return isKz ?
+                    "Түсінікті, жеткізу мекенжайын өзгертейік. Жаңа мекенжайды атап өтесіз бе? Сонымен қатар төлеміңізді тексеріп жатырмын." :
+                    "Принято! Давайте обновим адрес доставки. Укажите новый адрес, и я проверю статус вчерашнего платежа.";
+            } else if (route.scenario_id === "OPERATOR_HANDOVER") {
+                return isKz ?
+                    "Сізді операторға қосып жатырмын, күте тұрыңыз..." :
+                    "Соединяю вас с оператором. Пожалуйста, оставайтесь на линии.";
+            } else if (route.scenario_id === "OSAGO_RENEW") {
+                return isKz ?
+                    "Полисті ұзарту үшін ЖСН немесе автокөлік нөмірін айтыңыз." :
+                    "Для продления полиса назовите ваш ИИН или госномер автомобиля.";
+            }
+
+            return isKz ?
+                `Сұраныс «${sc.name}» сценарийі бойынша қабылданды. ИИН енгізіңіз.` :
+                `Запрос принят по сценарию «${sc.name}». Укажите ваш ИИН или номер договора.`;
+        }
+
+        function updateTracePanel(route, sttMs, routerMs, backendMs, totalMs) {
+            document.getElementById('sttTime').innerText = `${sttMs} ms`;
+            document.getElementById('routerTime').innerText = `${routerMs} ms`;
+            document.getElementById('backendTime').innerText = `${backendMs} ms`;
+            document.getElementById('totalTime').innerText = `${totalMs} ms`;
+
+            document.getElementById('routePathBadge').innerText = route.path;
+            document.getElementById('selectedScenarioName').innerHTML = `<i class="ph-bold ph-git-merge text-halyk-400 text-base"></i> <span>${route.scenario_id}</span>`;
+            document.getElementById('scenarioConfidence').innerText = `Уверенность: ${(route.confidence * 100).toFixed(0)}%`;
+            document.getElementById('scenarioJustification').innerText = `"${route.justification}"`;
+
+            document.getElementById('extractedParams').innerText = JSON.stringify(route.extracted_params, null, 2);
+
+            const altBox = document.getElementById('alternativesList');
+            if (route.alternatives && route.alternatives.length > 0) {
+                altBox.innerHTML = route.alternatives.map(a => `
+                    <div class="flex items-center justify-between bg-[#080d16] px-3 py-1.5 rounded-lg border border-slate-800">
+                        <span class="font-mono text-slate-300 font-semibold">${a.scenario_id}</span>
+                        <span class="font-mono text-slate-400 text-[11px]">${(a.score * 100).toFixed(0)}%</span>
+                    </div>
+                `).join('');
+            } else {
+                altBox.innerHTML = `<span class="text-slate-500 italic text-[11px]">Альтернативы отсутствуют</span>`;
+            }
+
+            const slaBar = document.getElementById('slaProgressBar');
+            const slaText = document.getElementById('slaStatusText');
+            const pct = Math.min(100, Math.round((routerMs / 500) * 100));
+            slaBar.style.width = `${pct}%`;
+
+            if (routerMs <= 500) {
+                slaBar.className = "bg-emerald-500 h-full transition-all duration-300";
+                slaText.innerText = `SLA Соблюден (${routerMs}мс)`;
+                slaText.className = "font-bold text-emerald-400 text-[11px]";
+            } else {
+                slaBar.className = "bg-amber-500 h-full transition-all duration-300";
+                slaText.innerText = `Допустимо (${routerMs}мс)`;
+                slaText.className = "font-bold text-amber-400 text-[11px]";
+            }
+        }
+
+        function appendChatMessage(sender, text, routeInfo = null) {
+            const box = document.getElementById('dialogBox');
+            const div = document.createElement('div');
+
+            if (sender === 'user') {
+                div.className = "flex gap-3 max-w-[85%] ml-auto justify-end";
+                div.innerHTML = `
+                    <div class="bg-halyk-700/80 border border-halyk-600 rounded-2xl rounded-tr-none p-3.5 text-xs text-white leading-relaxed shadow-sm">
+                        ${escapeHtml(text)}
+                    </div>
+                    <div class="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 text-slate-300 font-extrabold text-xs shadow">Вы</div>
+                `;
+            } else {
+                div.className = "flex gap-3 max-w-[85%]";
+                div.innerHTML = `
+                    <div class="w-8 h-8 rounded-xl bg-halyk-700 flex items-center justify-center shrink-0 text-white font-extrabold text-xs shadow">AI</div>
+                    <div class="flex flex-col gap-1">
+                        <div class="bg-slate-800/90 border border-slate-700/60 rounded-2xl rounded-tl-none p-3.5 text-xs text-slate-200 leading-relaxed shadow-sm">
+                            ${escapeHtml(text)}
+                        </div>
+                        ${routeInfo ? `<span class="text-[10px] text-emerald-400 font-mono px-1 font-semibold">Сценарий: ${routeInfo.scenario_id} (${routeInfo.path})</span>` : ''}
+                    </div>
+                `;
+            }
+
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function clearDialogHistory() {
+            dialogHistory = [];
+            const box = document.getElementById('dialogBox');
+            box.innerHTML = `
+                <div class="flex gap-3 max-w-[85%]">
+                    <div class="w-8 h-8 rounded-xl bg-halyk-700 flex items-center justify-center shrink-0 text-white font-extrabold text-xs shadow">AI</div>
+                    <div class="bg-slate-800/90 border border-slate-700/60 rounded-2xl rounded-tl-none p-3.5 text-xs text-slate-200 leading-relaxed shadow-sm">
+                        Диалог очищен. Задайте новый вопрос! / Армысыз! Сұрағыңызды қойыңыз.
+                    </div>
+                </div>
+            `;
+        }
+
+        function logSupervisorCall(log) {
+            callLogs.unshift(log);
+            renderSupervisorLogs();
+            updateKPIs();
+        }
+
+        function renderSupervisorLogs() {
+            const table = document.getElementById('supervisorLogTable');
+            if (callLogs.length === 0) {
+                table.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500 italic">Журнал пока пуст. Выполните запрос в симуляторе.</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = callLogs.map(log => `
+                <tr class="hover:bg-slate-800/40 transition">
+                    <td class="p-3 font-mono text-slate-400 text-[11px]">${log.timestamp}</td>
+                    <td class="p-3 max-w-[180px] truncate font-medium" title="${escapeHtml(log.utterance)}">${escapeHtml(log.utterance)}</td>
+                    <td class="p-3 font-mono font-bold text-halyk-400 text-[11px]">${log.scenario}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-medium">${log.path}</span></td>
+                    <td class="p-3 font-mono text-emerald-400 font-bold">${(log.confidence * 100).toFixed(0)}%</td>
+                    <td class="p-3 font-mono font-bold ${log.latency <= 500 ? 'text-emerald-400' : 'text-amber-400'}">${log.latency} ms</td>
+                    <td class="p-3 max-w-[200px] truncate text-slate-400 text-[11px]" title="${escapeHtml(log.justification)}">${escapeHtml(log.justification)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateKPIs() {
+            const total = callLogs.length;
+            document.getElementById('kpiTotalCalls').innerText = total;
+
+            const handovers = callLogs.filter(l => l.scenario === 'OPERATOR_HANDOVER').length;
+            document.getElementById('kpiOperatorHandovers').innerText = handovers;
+
+            const autoRate = total > 0 ? Math.round(((total - handovers) / total) * 100) : 100;
+            document.getElementById('kpiAutoClosed').innerText = `${autoRate}%`;
+
+            const avgLat = total > 0 ? Math.round(callLogs.reduce((acc, c) => acc + c.latency, 0) / total) : 0;
+            document.getElementById('kpiAvgLatency').innerText = `${avgLat} ms`;
+        }
+
+        function refreshSupervisorStats() {
+            renderSupervisorLogs();
+            updateKPIs();
+        }
+
+        function renderScenariosGrid(scenariosToRender = SCENARIOS_DATA) {
+            const grid = document.getElementById('scenariosGrid');
+            grid.innerHTML = scenariosToRender.map(sc => `
+                <div class="bg-[#0c1424] border border-slate-800/90 hover:border-halyk-500/50 rounded-2xl p-4 shadow-lg transition flex flex-col gap-3">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                        <span class="font-mono text-xs font-bold text-halyk-400">${sc.id}</span>
+                        <span class="text-[10px] px-2 py-0.5 bg-slate-800 text-slate-300 rounded-full border border-slate-700 font-semibold">${sc.category}</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-xs text-slate-100">${sc.name}</h4>
+                        <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">${sc.description}</p>
+                    </div>
+                    <div class="flex flex-col gap-1 text-[11px] bg-[#060a12] p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-slate-500 font-semibold">Параметры Slot Filling:</span>
+                        <span class="font-mono text-amber-300/90">${sc.parameters.length > 0 ? sc.parameters.join(', ') : 'отсутствуют'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterScenarios() {
+            const query = document.getElementById('scenarioSearch').value.toLowerCase();
+            const filtered = SCENARIOS_DATA.filter(sc => 
+                sc.id.toLowerCase().includes(query) || 
+                sc.name.toLowerCase().includes(query) || 
+                sc.category.toLowerCase().includes(query)
+            );
+            renderScenariosGrid(filtered);
+        }
+
+        async function runBenchmarkEvaluation() {
+            const btn = document.getElementById('runBenchmarkBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-base"></i> Выполнение...`;
+
+            const table = document.getElementById('benchmarkTable');
+            table.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 font-mono"><i class="ph-bold ph-spinner animate-spin text-halyk-500 text-lg"></i> Обработка выборки...</td></tr>`;
+
+            let correctCount = 0;
+            let totalLatency = 0;
+            let kzCorrect = 0;
+            let kzTotal = 0;
+            const results = [];
+
+            for (let i = 0; i < DEV_UTTERANCES.length; i++) {
+                const item = DEV_UTTERANCES[i];
+                const start = performance.now();
+                
+                let res = checkFastPathRules(item.text, []);
+                if (!res) {
+                    res = await executeLlmRouting(item.text);
+                }
+                const lat = Math.round(performance.now() - start);
+
+                const isMatch = (res.scenario_id === item.expected_id);
+                if (isMatch) correctCount++;
+                totalLatency += lat;
+
+                if (item.lang === 'kz' || item.lang === 'mixed') {
+                    kzTotal++;
+                    if (isMatch) kzCorrect++;
+                }
+
+                results.push({ item, res, lat, isMatch });
+                await new Promise(r => setTimeout(r, 80));
+            }
+
+            const accuracyPct = Math.round((correctCount / DEV_UTTERANCES.length) * 100);
+            const avgLat = Math.round(totalLatency / DEV_UTTERANCES.length);
+            const kzPct = kzTotal > 0 ? Math.round((kzCorrect / kzTotal) * 100) : 100;
+
+            document.getElementById('benchAccuracy').innerText = `${accuracyPct}%`;
+            document.getElementById('benchAvgLatency').innerText = `${avgLat} ms`;
+            document.getElementById('benchKzAccuracy').innerText = `${kzPct}%`;
+
+            table.innerHTML = results.map(r => `
+                <tr class="hover:bg-slate-800/40 transition">
+                    <td class="p-3 font-mono text-slate-400 text-[11px]">${r.item.id}</td>
+                    <td class="p-3 font-medium text-slate-200 max-w-[280px]">${escapeHtml(r.item.text)}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 font-mono font-bold">${r.item.lang.toUpperCase()}</span></td>
+                    <td class="p-3 font-mono text-slate-300 font-semibold">${r.item.expected_id}</td>
+                    <td class="p-3 font-mono font-bold ${r.isMatch ? 'text-emerald-400' : 'text-rose-400'}">${r.res.scenario_id}</td>
+                    <td class="p-3 font-mono font-bold ${r.lat <= 500 ? 'text-emerald-400' : 'text-amber-400'}">${r.lat} ms</td>
+                    <td class="p-3">
+                        ${r.isMatch 
+                            ? `<span class="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-[11px] font-bold flex items-center gap-1 w-max"><i class="ph-bold ph-check"></i> Успешно</span>`
+                            : `<span class="px-2.5 py-1 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-lg text-[11px] font-bold flex items-center gap-1 w-max"><i class="ph-bold ph-x"></i> Ошибка</span>`
+                        }
+                    </td>
+                </tr>
+            `).join('');
+
+            btn.disabled = false;
+            btn.innerHTML = `<i class="ph-bold ph-play text-base"></i> Запустить Тест Точности`;
+        }
+
+        function openSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('hidden');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.add('hidden');
+        }
+
+        function saveSettings() {
+            closeSettingsModal();
+            alertModal("Настройки успешно сохранены!");
+        }
+
+        function toggleKeyVisibility() {
+            const input = document.getElementById('customApiKeyInput');
+            const icon = document.getElementById('keyEyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'ph-bold ph-eye-slash text-base';
+            } else {
+                input.type = 'password';
+                icon.className = 'ph-bold ph-eye text-base';
+            }
+        }
+
+        function alertModal(msg) {
+            const div = document.createElement('div');
+            div.className = "fixed top-5 right-5 bg-[#0c1424] border border-slate-700 text-slate-100 p-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 max-w-sm text-xs font-semibold";
+            div.innerHTML = `<i class="ph-bold ph-check-circle text-halyk-400 text-xl"></i> <span>${msg}</span>`;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 3500);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>

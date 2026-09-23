@@ -1,0 +1,2140 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Halyk · Voice Router Studio</title>
+    <style>
+      :root {
+        --bg: #09120f;
+        --panel: #111e19;
+        --inset: #0b1611;
+        --line: #293b32;
+        --text: #edf5ef;
+        --muted: #a5b9ac;
+        --green: #94e4b6;
+        --accent: #bbf3ce;
+        --amber: #f0cc80;
+        --red: #ffaaaa;
+        --radius: 18px;
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+        color: var(--text);
+        background: var(--bg);
+        font-size: 14px;
+        line-height: 1.5;
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: #1b2c23;
+        color: var(--text);
+        border-radius: 10px;
+        padding: 10px 15px;
+        transition: background 0.15s;
+      }
+      button:hover {
+        background: #30483a;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      button.primary {
+        background: var(--accent);
+        color: #123423;
+        border-color: var(--accent);
+        font-weight: 700;
+      }
+      button.danger {
+        color: var(--red);
+      }
+      :focus-visible {
+        outline: 3px solid var(--green);
+        outline-offset: 3px;
+      }
+      input,
+      textarea,
+      select {
+        width: 100%;
+        background: var(--inset);
+        border: 1px solid #3a5042;
+        border-radius: 10px;
+        padding: 11px;
+        color: var(--text);
+      }
+      textarea {
+        resize: vertical;
+        min-height: 90px;
+      }
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      input[type="checkbox"] {
+        width: auto;
+        accent-color: var(--green);
+      }
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+      h1 {
+        font-size: 23px;
+        letter-spacing: -0.8px;
+      }
+      h2 {
+        font-size: 18px;
+        letter-spacing: -0.3px;
+      }
+      h3 {
+        font-size: 14px;
+      }
+      small,
+      .muted {
+        color: var(--muted);
+      }
+      small {
+        font-size: 12px;
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        overflow-wrap: anywhere;
+        font-size: 12px;
+      }
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--green);
+        font-weight: 700;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        border: 1px solid var(--line);
+        border-radius: 99px;
+        padding: 5px 10px;
+        font-size: 11px;
+        color: var(--green);
+        white-space: nowrap;
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--green);
+      }
+      header {
+        border-bottom: 1px solid var(--line);
+        padding: 22px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        background: #101c16;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+      }
+      .mark {
+        display: grid;
+        place-items: center;
+        background: var(--accent);
+        color: #143921;
+        border-radius: 13px;
+        width: 46px;
+        height: 46px;
+        font-size: 24px;
+        font-weight: 800;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .between {
+        justify-content: space-between;
+      }
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-width: 0;
+      }
+      main {
+        max-width: 1440px;
+        margin: auto;
+        padding: 26px 32px;
+      }
+      nav {
+        display: flex;
+        gap: 6px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 25px;
+        overflow: auto;
+        padding-bottom: 12px;
+      }
+      nav button {
+        background: transparent;
+        border-color: transparent;
+        white-space: nowrap;
+        color: var(--muted);
+      }
+      nav button[aria-selected="true"] {
+        background: #20372a;
+        color: var(--accent);
+        border-color: #395440;
+      }
+      .intro {
+        margin-bottom: 23px;
+      }
+      .intro h2 {
+        font-size: 29px;
+        margin: 4px 0 8px;
+        letter-spacing: -1px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+        gap: 20px;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 22px;
+        min-width: 0;
+      }
+      .panel-head {
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 18px;
+      }
+      .inset {
+        background: var(--inset);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 15px;
+      }
+      .notice {
+        border-left: 3px solid var(--amber);
+        padding: 10px 14px;
+        background: #29251a;
+        color: #e5d7b6;
+        font-size: 12px;
+      }
+      .chips {
+        display: flex;
+        gap: 7px;
+        flex-wrap: wrap;
+      }
+      .chips button {
+        font-size: 12px;
+        padding: 6px 10px;
+        background: transparent;
+      }
+      .wave {
+        height: 64px;
+        display: flex;
+        gap: 5px;
+        align-items: center;
+        justify-content: center;
+        margin: 6px 0 12px;
+        background: radial-gradient(ellipse, #22452e 0%, transparent 70%);
+      }
+      .wave span {
+        width: 4px;
+        height: var(--h);
+        background: var(--green);
+        border-radius: 6px;
+        opacity: 0.45;
+      }
+      .recording .wave span {
+        animation: wave 0.65s alternate infinite;
+        animation-delay: var(--d);
+        opacity: 0.9;
+      }
+      @keyframes wave {
+        to {
+          transform: scaleY(0.25);
+        }
+      }
+      .input-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .chat {
+        height: 310px;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding-right: 5px;
+      }
+      .message {
+        max-width: 92%;
+        border-radius: 14px 14px 14px 3px;
+        padding: 12px 14px;
+        background: #203027;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .message.user {
+        align-self: flex-end;
+        background: #294c38;
+        border-radius: 14px 14px 3px 14px;
+      }
+      .message small {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 10px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .result-title {
+        font-size: 22px;
+        color: var(--accent);
+        line-height: 1.25;
+        margin: 10px 0;
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .metric {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 13px;
+        background: var(--inset);
+      }
+      .metric strong {
+        display: block;
+        font-size: 23px;
+        margin: 6px 0 0;
+        font-variant-numeric: tabular-nums;
+      }
+      .metric small {
+        font-size: 11px;
+      }
+      .ok {
+        color: var(--green);
+      }
+      .warn {
+        color: var(--amber);
+      }
+      .bad {
+        color: var(--red);
+      }
+      pre {
+        margin: 8px 0 0;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        color: var(--amber);
+      }
+      .alternatives {
+        margin: 8px 0 0;
+        padding-left: 19px;
+      }
+      .alternatives li {
+        margin: 5px 0;
+      }
+      progress {
+        width: 100%;
+        height: 6px;
+        accent-color: var(--green);
+      }
+      .table-wrap {
+        overflow: auto;
+        margin-top: 18px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 12px;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 500;
+        background: var(--inset);
+        white-space: nowrap;
+      }
+      th,
+      td {
+        padding: 13px 11px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      td {
+        overflow-wrap: anywhere;
+        min-width: 95px;
+      }
+      td.utterance {
+        min-width: 230px;
+        max-width: 420px;
+      }
+      .empty {
+        text-align: center;
+        color: var(--muted);
+        padding: 35px;
+      }
+      .catalog {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .catalog h3 {
+        font-size: 16px;
+        margin: 10px 0;
+      }
+      .catalog .panel {
+        padding: 18px;
+      }
+      .catalog p {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+      .catalog .mono {
+        color: var(--green);
+        font-size: 11px;
+      }
+      .search {
+        max-width: 340px;
+      }
+      .kpis {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 20px 32px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 11px;
+      }
+      dialog {
+        width: min(510px, calc(100% - 28px));
+        max-height: 90vh;
+        overflow: auto;
+        background: var(--panel);
+        color: var(--text);
+        border: 1px solid #4b6c57;
+        border-radius: 20px;
+        padding: 25px;
+      }
+      dialog::backdrop {
+        background: #020905c9;
+        backdrop-filter: blur(4px);
+      }
+      dialog form {
+        display: flex;
+        flex-direction: column;
+        gap: 19px;
+      }
+      .check {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      #toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 20px;
+        background: #d0f6dd;
+        color: #10331e;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px #0008;
+        z-index: 10;
+        max-width: calc(100% - 32px);
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      @media (min-width: 1600px) {
+        main {
+          padding-top: 38px;
+        }
+      }
+      @media (max-width: 950px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .catalog {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .kpis {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 560px) {
+        header,
+        main,
+        footer {
+          padding: 16px;
+        }
+        header .pill {
+          display: none;
+        }
+        h1 {
+          font-size: 18px;
+        }
+        .brand small {
+          font-size: 10px;
+        }
+        .mark {
+          width: 36px;
+          height: 36px;
+        }
+        .intro h2 {
+          font-size: 24px;
+        }
+        .panel {
+          padding: 16px;
+        }
+        .catalog {
+          grid-template-columns: 1fr;
+        }
+        .metrics:not(.kpis) {
+          grid-template-columns: 1fr;
+        }
+        .metrics:not(.kpis) .metric {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .metric strong {
+          font-size: 20px;
+          margin: 0;
+        }
+        .input-foot {
+          flex-wrap: wrap;
+        }
+        .chat {
+          height: 300px;
+        }
+        .row > select {
+          width: 100% !important;
+        }
+        footer {
+          flex-direction: column;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <div class="mark" aria-hidden="true">H</div>
+        <div>
+          <h1>Voice Router <span class="ok">Studio</span></h1>
+          <small>Halyk · Лаборатория голосовых сценариев</small>
+        </div>
+      </div>
+      <div class="row">
+        <span class="pill"><span class="dot"></span>Локальный деморежим</span
+        ><button id="settingsButton" aria-haspopup="dialog">Настройки</button>
+      </div>
+    </header>
+    <main>
+      <nav role="tablist" aria-label="Разделы приложения">
+        <button
+          id="tab-simulator"
+          role="tab"
+          aria-selected="true"
+          aria-controls="simulator"
+          data-tab="simulator"
+        >
+          01 · Симулятор
+        </button>
+        <button
+          id="tab-supervisor"
+          role="tab"
+          aria-selected="false"
+          aria-controls="supervisor"
+          data-tab="supervisor"
+          tabindex="-1"
+        >
+          02 · Супервизор
+        </button>
+        <button
+          id="tab-catalog"
+          role="tab"
+          aria-selected="false"
+          aria-controls="catalog"
+          data-tab="catalog"
+          tabindex="-1"
+        >
+          03 · Сценарии
+        </button>
+        <button
+          id="tab-benchmark"
+          role="tab"
+          aria-selected="false"
+          aria-controls="benchmark"
+          data-tab="benchmark"
+          tabindex="-1"
+        >
+          04 · Проверка качества
+        </button>
+      </nav>
+      <section id="simulator" role="tabpanel" aria-labelledby="tab-simulator">
+        <div class="intro">
+          <div class="eyebrow">Conversation workspace</div>
+          <h2>Одна реплика. Понятный маршрут.</h2>
+          <p class="muted">
+            Тестируйте обращения на русском и казахском. Смотрите, почему выбран
+            сценарий.
+          </p>
+        </div>
+        <div class="grid">
+          <div class="stack">
+            <div class="panel" id="voicePanel">
+              <div class="row between">
+                <h2>Входящее обращение</h2>
+                <span class="pill" id="micStatus" role="status"
+                  >Текстовый ввод готов</span
+                >
+              </div>
+              <div class="wave" aria-hidden="true" id="wave"></div>
+              <form id="inputForm">
+                <label for="userInput">Реплика клиента</label
+                ><textarea
+                  id="userInput"
+                  maxlength="2000"
+                  placeholder="Например: оплатил полис, но подтверждение не пришло"
+                  required
+                ></textarea>
+                <div class="input-foot">
+                  <button type="button" id="micButton" aria-pressed="false">
+                    ● Запись</button
+                  ><small>Enter — отправить · Shift+Enter — новая строка</small
+                  ><button type="submit" class="primary" id="sendButton">
+                    Отправить ↗
+                  </button>
+                </div>
+              </form>
+              <p
+                class="muted"
+                id="speechHint"
+                style="font-size: 11px; margin: 10px 0"
+              >
+                Голосовой ввод зависит от браузера; распознавание может
+                использовать его внешний сервис.
+              </p>
+              <div class="chips" aria-label="Примеры обращений">
+                <button data-example="0">Смена темы</button
+                ><button data-example="1">Қазақша + русский</button
+                ><button data-example="3">Оператор</button>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="row between panel-head">
+                <h2>Диалог</h2>
+                <button id="clearChat">Очистить диалог</button>
+              </div>
+              <div
+                id="dialogBox"
+                class="chat"
+                role="log"
+                aria-live="polite"
+                aria-label="История диалога"
+              ></div>
+            </div>
+          </div>
+          <aside class="panel stack" aria-label="Результат маршрутизации">
+            <div class="row between panel-head">
+              <h2>Трассировка</h2>
+              <span class="pill" id="routePath">Ожидание</span>
+            </div>
+            <div>
+              <small>Выбранный сценарий</small>
+              <h3 class="result-title" id="routeName">Начните диалог</h3>
+              <div class="mono muted" id="routeId">—</div>
+              <p id="routeReason" class="muted" style="margin-top: 12px">
+                Здесь появятся совпадения, параметры и альтернативные намерения.
+              </p>
+            </div>
+            <div class="metrics">
+              <div class="metric">
+                <small>Маршрут</small><strong id="routeTime">—</strong>
+              </div>
+              <div class="metric">
+                <small>Язык текста</small><strong id="routeLang">—</strong>
+              </div>
+              <div class="metric">
+                <small>Баллы правил</small><strong id="routeScore">—</strong>
+              </div>
+            </div>
+            <div>
+              <div class="row between">
+                <small>Порог времени маршрута: 500 мс</small
+                ><small id="slaText">Нет замера</small>
+              </div>
+              <progress
+                id="slaProgress"
+                max="500"
+                value="0"
+                aria-label="Время маршрутизации относительно порога 500 мс"
+              ></progress>
+            </div>
+            <div class="inset">
+              <h3>Извлечённые параметры</h3>
+              <pre class="mono" id="params">{}</pre>
+            </div>
+            <div class="inset">
+              <h3>Другие найденные намерения</h3>
+              <ul id="alternatives" class="alternatives muted">
+                <li>Нет данных</li>
+              </ul>
+            </div>
+            <p class="notice">
+              Демонстрация правил, без LLM и банковского API. Баллы отражают
+              совпадения с правилами, а не вероятность. Операции с полисами,
+              платежами и перевод на оператора не выполняются.
+            </p>
+          </aside>
+        </div>
+      </section>
+      <section
+        id="supervisor"
+        role="tabpanel"
+        aria-labelledby="tab-supervisor"
+        hidden
+      >
+        <div class="intro row between">
+          <div>
+            <div class="eyebrow">Session overview</div>
+            <h2>Супервизор</h2>
+            <p class="muted">
+              Последние 200 реплик текущей сессии. Журнал не сохраняется после
+              перезагрузки.
+            </p>
+          </div>
+          <div class="row">
+            <button id="exportLogs">Экспорт JSON</button
+            ><button id="clearLogs" class="danger">Очистить журнал</button>
+          </div>
+        </div>
+        <div class="metrics kpis">
+          <div class="metric">
+            <small>Обработано реплик</small><strong id="kpiTotal">0</strong>
+          </div>
+          <div class="metric">
+            <small>Определён сценарий</small
+            ><strong class="ok" id="kpiRouted">—</strong>
+          </div>
+          <div class="metric">
+            <small>Средняя задержка</small><strong id="kpiLatency">—</strong>
+          </div>
+          <div class="metric">
+            <small>Запросы оператора</small><strong id="kpiOperator">0</strong>
+          </div>
+        </div>
+        <div class="panel" style="margin-top: 20px">
+          <div class="row between">
+            <h2>Журнал маршрутов</h2>
+            <input
+              class="search"
+              id="logSearch"
+              aria-label="Поиск по журналу"
+              placeholder="Поиск по реплике или сценарию"
+            />
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Время</th>
+                  <th scope="col">Реплика</th>
+                  <th scope="col">Сценарий</th>
+                  <th scope="col">Язык</th>
+                  <th scope="col">Баллы</th>
+                  <th scope="col">Время, мс</th>
+                </tr>
+              </thead>
+              <tbody id="logRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section
+        id="catalog"
+        role="tabpanel"
+        aria-labelledby="tab-catalog"
+        hidden
+      >
+        <div class="intro row between">
+          <div>
+            <div class="eyebrow">Intent library</div>
+            <h2>Каталог сценариев</h2>
+            <p class="muted" id="catalogCount"></p>
+          </div>
+          <input
+            class="search"
+            id="scenarioSearch"
+            aria-label="Поиск сценариев"
+            placeholder="Название, категория или идентификатор"
+          />
+        </div>
+        <div id="scenarioGrid" class="catalog"></div>
+      </section>
+      <section
+        id="benchmark"
+        role="tabpanel"
+        aria-labelledby="tab-benchmark"
+        hidden
+      >
+        <div class="intro row between">
+          <div>
+            <div class="eyebrow">Quality lab</div>
+            <h2>Проверка маршрутизации</h2>
+            <p class="muted">
+              Исходные примеры и дополнительные регрессионные случаи. Это
+              локальная контрольная выборка.
+            </p>
+          </div>
+          <button class="primary" id="runBenchmark">Запустить проверку</button>
+        </div>
+        <div class="metrics">
+          <div class="metric">
+            <small>Совпадение с эталоном</small
+            ><strong class="ok" id="benchAccuracy">—</strong>
+          </div>
+          <div class="metric">
+            <small>Казахский / смешанный</small><strong id="benchKz">—</strong>
+          </div>
+          <div class="metric">
+            <small>Среднее время</small><strong id="benchLatency">—</strong>
+          </div>
+        </div>
+        <p class="muted" id="benchStatus" role="status" style="margin: 15px 0">
+          Результаты не являются оценкой качества на реальных звонках.
+        </p>
+        <div class="panel table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Реплика</th>
+                <th scope="col">Ожидание</th>
+                <th scope="col">Результат</th>
+                <th scope="col">Проверка</th>
+              </tr>
+            </thead>
+            <tbody id="benchRows">
+              <tr>
+                <td colspan="5" class="empty">
+                  Запустите проверку, чтобы увидеть результаты.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <span>Halyk Voice Router · Демонстрационный прототип</span
+      ><span>v4.0 · Автономный интерфейс · RU / KZ</span>
+    </footer>
+    <dialog id="settingsDialog" aria-labelledby="settingsTitle">
+      <form id="settingsForm">
+        <div class="row between">
+          <h2 id="settingsTitle">Настройки речи</h2>
+          <button
+            type="button"
+            id="closeSettings"
+            aria-label="Закрыть настройки"
+          >
+            ✕
+          </button>
+        </div>
+        <div>
+          <label for="speechLanguage">Язык голосового ввода</label
+          ><select id="speechLanguage">
+            <option value="ru-RU">Русский</option>
+            <option value="kk-KZ">Қазақша</option>
+          </select>
+        </div>
+        <label class="check"
+          ><input type="checkbox" id="ttsEnabled" />Озвучивать ответы</label
+        >
+        <div>
+          <label for="voiceSelect">Голос синтеза речи</label
+          ><select id="voiceSelect">
+            <option value="">Автоматически по языку</option>
+          </select>
+        </div>
+        <p class="muted">
+          Сохраняются только настройки речи. Текст диалога и аудио приложение не
+          записывает в постоянное хранилище. Вводите тестовые данные.
+        </p>
+        <div class="row" style="justify-content: flex-end">
+          <button type="button" id="cancelSettings">Отмена</button
+          ><button type="submit" class="primary">Сохранить</button>
+        </div>
+      </form>
+    </dialog>
+    <div id="toast" role="status" hidden></div>
+    <noscript
+      ><p class="notice">
+        Для работы симулятора включите JavaScript в браузере.
+      </p></noscript
+    >
+    <script>
+      "use strict";
+      /*
+       * Halyk Voice Router Studio 4.0 — standalone demonstration.
+       * Architecture: scenario data → pure deterministic router → UI and speech adapters.
+       * No external scripts, backend, LLM, analytics or bank operations are configured.
+       * RULES weights are manually assigned priorities, not calibrated probabilities.
+       * Only CASES in the Quality tab are regression fixtures, not production validation.
+       * SCENARIOS.parameters describes a future contract; parametersOf extracts a subset.
+       * Runtime chat/logs are bounded and memory-only. localStorage contains speech preferences.
+       * SpeechRecognition may use the browser vendor's network service.
+       * To connect a real router: implement a server-side adapter with authentication,
+       * cancellation and response-schema validation. Never embed provider API keys here.
+       */
+      const SCENARIOS = [
+        {
+          id: "OSAGO_CALCULATE",
+          name: "Расчет стоимости ОГПО (ОСАГО)",
+          category: "Страхование авто",
+          description:
+            "Расчет стоимости обязательного автострахования по ИИН или госномеру",
+          parameters: ["iin", "car_number", "region"],
+          action: "get_osago_quote",
+        },
+        {
+          id: "OSAGO_RENEW",
+          name: "Продление полиса ОГПО",
+          category: "Страхование авто",
+          description: "Продление действующего или истекшего автополиса",
+          parameters: ["policy_id", "iin"],
+          action: "renew_osago_policy",
+        },
+        {
+          id: "CASCO_QUOTE",
+          name: "Расчет КАСКО",
+          category: "Страхование авто",
+          description: "Добровольное автострахование от повреждений и угона",
+          parameters: ["car_model", "year", "estimated_cost"],
+          action: "get_casco_quote",
+        },
+        {
+          id: "CLAIM_REPORT_ACCIDENT",
+          name: "Заявление о ДТП / Страховой случай",
+          category: "Страховые случаи",
+          description: "Регистрация аварии и страхового случая по автомобилю",
+          parameters: ["policy_id", "date", "location"],
+          action: "report_claim",
+        },
+        {
+          id: "ADDRESS_CHANGE",
+          name: "Изменение адреса доставки документов",
+          category: "Обслуживание",
+          description: "Смена адреса доставки оригиналов полиса или карт",
+          parameters: ["new_address", "city"],
+          action: "update_address",
+        },
+        {
+          id: "PAYMENT_STATUS_CHECK",
+          name: "Проверка статуса оплаты",
+          category: "Платежи",
+          description:
+            "Проверка списания денег при задержке подтверждения заказа",
+          parameters: ["payment_id", "transaction_date"],
+          action: "check_payment_status",
+        },
+        {
+          id: "PROPERTY_INSURANCE",
+          name: "Страхование имущества / квартиры",
+          category: "Имущество",
+          description: "Защита недвижимости от затопления, пожара и краж",
+          parameters: ["property_type", "city", "square_meters"],
+          action: "quote_property",
+        },
+        {
+          id: "TRAVEL_INSURANCE",
+          name: "Туристическая страховка (ВЗР)",
+          category: "Путешествия",
+          description: "Страховка для визы и путешествий за границу",
+          parameters: ["country", "duration_days", "passengers_count"],
+          action: "quote_travel",
+        },
+        {
+          id: "HEALTH_INSURANCE_DMS",
+          name: "Медицинское страхование (ДМС)",
+          category: "Медицина",
+          description: "Добровольная медицина и прикрепление к клиникам",
+          parameters: ["city", "package_type"],
+          action: "get_dms_info",
+        },
+        {
+          id: "LIFE_INSURANCE",
+          name: "Страхование жизни и накопительное",
+          category: "Жизнь",
+          description: "Накопительное страхование жизни (НСЖ) и инвестиции",
+          parameters: ["monthly_amount", "term_years"],
+          action: "get_life_insurance",
+        },
+        {
+          id: "OPERATOR_HANDOVER",
+          name: "Перевод на оператора",
+          category: "Системные",
+          description: "Прямое соединение с человеком в контакт-центре",
+          parameters: ["reason"],
+          action: "transfer_to_human",
+        },
+        {
+          id: "POLICY_DOWNLOAD_PDF",
+          name: "Скачать / получить полис PDF",
+          category: "Обслуживание",
+          description: "Отправка готового документа на электронную почту или в WhatsApp",
+          parameters: ["policy_id", "email"],
+          action: "send_policy_pdf",
+        },
+        {
+          id: "CREDIT_INSURANCE",
+          name: "Страховка по кредиту / залогу",
+          category: "Кредиты",
+          description:
+            "Страхование залогового имущества и кредитных обязательств",
+          parameters: ["bank_name", "credit_id"],
+          action: "get_credit_insurance",
+        },
+        {
+          id: "REFUND_POLICY",
+          name: "Расторжение договора и возврат средств",
+          category: "Платежи",
+          description: "Аннулирование полиса и возврат уплаченной суммы",
+          parameters: ["policy_id", "reason"],
+          action: "cancel_policy",
+        },
+        {
+          id: "CARD_PAYMENT_ISSUE",
+          name: "Проблема с картой Halyk",
+          category: "Карты и платежи",
+          description:
+            "Диагностика ошибок списания с карты или банковского приложения",
+          parameters: ["card_last4", "error_code"],
+          action: "diagnose_card_issue",
+        },
+      ];
+      const ORIGINAL_CASES = [
+        {
+          id: 1,
+          text: "Здравствуйте, я вчера оплатил страховой полис, деньги списались, а заказ не подтвердился... а, и ещё, адрес доставки поменять надо.",
+          expected_id: "ADDRESS_CHANGE",
+          lang: "ru",
+        },
+        {
+          id: 2,
+          text: "Сәлеметсіз бе, автокөлікті сақтандыру бағасы қанша тұрады? И можно ли сразу оформить рассрочку?",
+          expected_id: "OSAGO_CALCULATE",
+          lang: "mixed",
+        },
+        {
+          id: 3,
+          text: "Мен страховкамды ұзартқым келеді, қалай жасауға болады?",
+          expected_id: "OSAGO_RENEW",
+          lang: "kz",
+        },
+        {
+          id: 4,
+          text: "Позовите мне человека! Робот не понимает мой вопрос.",
+          expected_id: "OPERATOR_HANDOVER",
+          lang: "ru",
+        },
+        {
+          id: 5,
+          text: "Я вчера попал в ДТП возле Достык плаза, как теперь подать заявление на выплату?",
+          expected_id: "CLAIM_REPORT_ACCIDENT",
+          lang: "ru",
+        },
+        {
+          id: 6,
+          text: "Шетелге визаға сақтандыру полисі керек еді, 10 күнге Түркияға.",
+          expected_id: "TRAVEL_INSURANCE",
+          lang: "kz",
+        },
+        {
+          id: 7,
+          text: "Маған полисті электронды поштама PDF форматында жібере аласыз ба?",
+          expected_id: "POLICY_DOWNLOAD_PDF",
+          lang: "kz",
+        },
+        {
+          id: 8,
+          text: "Хочу расторгнуть договор страхования квартиры и вернуть деньги.",
+          expected_id: "REFUND_POLICY",
+          lang: "ru",
+        },
+        {
+          id: 9,
+          text: "Картамнан ақша ұсталды, бірақ қосымшада чек шықпады.",
+          expected_id: "PAYMENT_STATUS_CHECK",
+          lang: "kz",
+        },
+        {
+          id: 10,
+          text: "Сколько стоит страховка КАСКО на новую Тойоту Камри 2024 года?",
+          expected_id: "CASCO_QUOTE",
+          lang: "ru",
+        },
+      ];
+      // The router is deterministic and offline. No bank action or model call is made.
+      const RULES = [
+        [
+          "OPERATOR_HANDOVER",
+          12,
+          ["оператор", "человек", "адаммен", "маманмен", "қызметкермен"],
+        ],
+        [
+          "REFUND_POLICY",
+          10,
+          [
+            "расторг",
+            "расторжен",
+            "вернуть деньги",
+            "возврат",
+            "отменить полис",
+            "отмена полиса",
+            "ақшаны қайтар",
+            "шартты бұз",
+          ],
+        ],
+        ["ADDRESS_CHANGE", 8, ["адрес", "мекенжай"]],
+        [
+          "CLAIM_REPORT_ACCIDENT",
+          8,
+          [
+            "дтп",
+            "авари",
+            "страховой случай",
+            "страховом случае",
+            "попал в аварию",
+            "жол апат",
+            "апатқа",
+          ],
+        ],
+        [
+          "POLICY_DOWNLOAD_PDF",
+          8,
+          [
+            "pdf",
+            "скачать полис",
+            "пришлите полис",
+            "отправьте полис",
+            "поштама",
+            "полисті жібер",
+          ],
+        ],
+        ["OSAGO_RENEW", 8, ["продлить", "продлен", "продлев", "ұзарт"]],
+        ["CASCO_QUOTE", 7, ["каско"]],
+        [
+          "TRAVEL_INSURANCE",
+          7,
+          [
+            "виза",
+            "визу",
+            "визе",
+            "визы",
+            "визой",
+            "визалық",
+            "визаға",
+            "турист",
+            "путешеств",
+            "шетел",
+            "за границ",
+            "түркия",
+          ],
+        ],
+        [
+          "CREDIT_INSURANCE",
+          7,
+          [
+            "страховка по кредит",
+            "страхование кредит",
+            "страхование залог",
+            "залогов",
+            "кредитті сақтан",
+            "кепіл",
+          ],
+        ],
+        [
+          "HEALTH_INSURANCE_DMS",
+          6,
+          ["дмс", "медицинск", "клиник", "медициналық"],
+        ],
+        [
+          "LIFE_INSURANCE",
+          6,
+          [
+            "страхование жизни",
+            "страхования жизни",
+            "накопительн",
+            "нсж",
+            "өмірді сақтан",
+            "өмір сақтан",
+          ],
+        ],
+        [
+          "PROPERTY_INSURANCE",
+          5,
+          [
+            "страхование квартир",
+            "страхования квартир",
+            "страховка квартир",
+            "страхование имуществ",
+            "страхования имуществ",
+            "недвижим",
+            "квартиру",
+            "мүлікті",
+            "пәтер",
+          ],
+        ],
+        [
+          "CARD_PAYMENT_ISSUE",
+          6,
+          [
+            "карта не",
+            "картой не",
+            "ошибка карт",
+            "заблокир",
+            "разблокир",
+            "картаны бұғат",
+            "карта жұмыс",
+            "картасының қатесі",
+          ],
+        ],
+        [
+          "PAYMENT_STATUS_CHECK",
+          5,
+          [
+            "оплатил",
+            "оплатила",
+            "списал",
+            "списан",
+            "списыв",
+            "платеж",
+            "платёж",
+            "оплаты",
+            "ақша ұсталды",
+            "ақша шешілді",
+            "төлем",
+            "чек шықпады",
+          ],
+        ],
+        [
+          "OSAGO_CALCULATE",
+          3,
+          [
+            "огпо",
+            "осаг",
+            "автострах",
+            "автокөлікті сақтан",
+            "автокөлік сақтан",
+            "страховка на авто",
+            "страховку на авто",
+            "страхование автомобил",
+            "страховка на машин",
+          ],
+        ],
+      ];
+      const normalize = (text) =>
+        String(text)
+          .normalize("NFKC")
+          .toLocaleLowerCase("ru")
+          .replace(/ё/g, "е")
+          .replace(/\s+/g, " ")
+          .trim();
+      function languageOf(text) {
+        const t = normalize(text),
+          kz = /[әғқңөұүһі]/u.test(t);
+        const ru =
+          /(?:^|[^а-яё])(?:я|мне|мой|можно|хочу|сразу|оформить|здравствуйте|деньги|сколько|страховкамды)(?:$|[^а-яё])/u.test(
+            t,
+          );
+        return kz ? (ru && !t.includes("страховкамды") ? "mixed" : "kz") : "ru";
+      }
+      function parametersOf(text, id) {
+        const p = {},
+          t = normalize(text);
+        if (id === "CASCO_QUOTE") {
+          const year = t.match(/\b(19\d{2}|20\d{2})\b/);
+          if (year) p.year = Number(year[1]);
+          const model = text.match(
+            /(?:Toyota\s+Camry|Тойот[ау]\s+Камри|Hyundai\s+\w+|Kia\s+\w+)/iu,
+          );
+          if (model) p.car_model = model[0];
+        }
+        if (id === "TRAVEL_INSURANCE") {
+          const days = t.match(/\b(\d{1,3})\s*(?:дн|день|күн)/u);
+          if (days && Number(days[1]) > 0) p.duration_days = Number(days[1]);
+          if (/турци|түркия/.test(t)) p.country = "TR";
+        }
+        if (id === "POLICY_DOWNLOAD_PDF" && /pdf/i.test(text)) p.format = "PDF";
+        if (id === "OPERATOR_HANDOVER") p.reason = "operator_request";
+        // Sensitive identifiers are deliberately not extracted in this demonstration.
+        return p;
+      }
+      function rankIntents(text) {
+        let t = normalize(text);
+        const wholeWords = new Set(["виза", "визу", "визе", "визы", "визой"]);
+        // Ignore explicit refusals of a human handover without suppressing later requests.
+        t = t.replace(
+          /(?:не\s+(?:нужен|нужна|надо|хочу)\s+(?:мне\s+)?(?:оператор[а-я]*|человек[а-я]*)|(?:оператор[а-я]*|человек[а-я]*)\s+(?:(?:мне|пока)\s+)?не\s+нуж[а-я]*|(?:оператор|адаммен|маманмен)\s+(?:сөйлесу\s+)?(?:керек емес|сөйлескім келмейді))/gu,
+          "",
+        );
+        return RULES.map(([id, weight, terms]) => {
+          // Совпадение начинается на границе слова; окончания у основ допустимы.
+          const matches = terms.filter((term) => {
+            const needle = normalize(term);
+            let index = t.indexOf(needle);
+            while (index !== -1) {
+              if (
+                (index === 0 || !/[a-zа-яәғқңөұүһі]/u.test(t[index - 1])) &&
+                (!wholeWords.has(needle) ||
+                  !/[a-zа-яәғқңөұүһі]/u.test(t[index + needle.length] || ""))
+              )
+                return true;
+              index = t.indexOf(needle, index + 1);
+            }
+            return false;
+          });
+          return {
+            id,
+            score: matches.length
+              ? weight + Math.min(matches.length - 1, 2)
+              : 0,
+            matches,
+          };
+        })
+          .filter((r) => r.score > 0)
+          .sort((a, b) => b.score - a.score);
+      }
+      function routeText(text, context = null) {
+        const t = normalize(text),
+          lang = languageOf(text);
+        const result = (id, score, reason, alternatives = [], params = {}) => ({
+          id,
+          score,
+          reason,
+          alternatives,
+          params,
+          lang,
+          path:
+            id === "OPERATOR_HANDOVER"
+              ? "Быстрое правило"
+              : "Локальные правила",
+        });
+        if (!t) return result("CLARIFY", 0, "Пустая реплика.");
+        if (
+          /^(здравствуйте|привет|добрый день|сәлеметсіз бе|сәлем)[!.?\s]*$/u.test(
+            t,
+          )
+        )
+          return result("GREETING", 0, "Приветствие без запроса услуги.");
+        const ranked = rankIntents(t);
+        if (!ranked.length) {
+          if (context?.id && SCENARIOS.some((s) => s.id === context.id)) {
+            const params = parametersOf(text, context.id);
+            if (Object.keys(params).length)
+              return result(
+                context.id,
+                0,
+                "Дополнение параметров предыдущего сценария.",
+                [],
+                { ...context.params, ...params },
+              );
+          }
+          return result(
+            "CLARIFY",
+            0,
+            "Нет достаточных совпадений. Нужно уточнить запрос.",
+          );
+        }
+        const top = ranked[0],
+          alternatives = ranked
+            .slice(1)
+            .map((r) => ({ id: r.id, score: r.score }));
+        if (ranked[1]?.score === top.score && top.id !== "OPERATOR_HANDOVER")
+          return result(
+            "CLARIFY",
+            0,
+            "Несколько намерений с одинаковым приоритетом. Выберите тему.",
+            ranked.map((r) => ({ id: r.id, score: r.score })),
+          );
+        return result(
+          top.id,
+          top.score,
+          `Совпадения: «${top.matches.join("», «")}».${alternatives.length ? " Приоритет задан порядком и весами правил; другие темы показаны ниже." : ""}`,
+          alternatives,
+          parametersOf(text, top.id),
+        );
+      }
+      const EXTRA_CASES = [
+        ["Здравствуйте!", "GREETING", "ru"],
+        ["Сәлеметсіз бе!", "GREETING", "kz"],
+        ["Какая погода завтра?", "CLARIFY", "ru"],
+        ["Хочу продлить полис", "OSAGO_RENEW", "ru"],
+        ["Полисті ұзарту керек", "OSAGO_RENEW", "kz"],
+        [
+          "Соедините меня с человеком, робот не помогает",
+          "OPERATOR_HANDOVER",
+          "ru",
+        ],
+        ["Оператор не нужен, хочу КАСКО", "CASCO_QUOTE", "ru"],
+        ["Не хочу оператора, хочу продлить полис", "OSAGO_RENEW", "ru"],
+        ["Адаммен сөйлесу керек", "OPERATOR_HANDOVER", "kz"],
+        ["Оператор керек емес, полисті ұзарту керек", "OSAGO_RENEW", "kz"],
+        ["Хочу вернуть деньги за полис", "REFUND_POLICY", "ru"],
+        ["Ақшаны қайтару керек", "REFUND_POLICY", "kz"],
+        ["Изменить адрес доставки", "ADDRESS_CHANGE", "ru"],
+        ["Мекенжай өзгерді", "ADDRESS_CHANGE", "kz"],
+        ["Хочу застраховать квартиру", "PROPERTY_INSURANCE", "ru"],
+        ["Пәтер сақтандыру", "PROPERTY_INSURANCE", "kz"],
+        ["Интересует ДМС", "HEALTH_INSURANCE_DMS", "ru"],
+        ["Медициналық сақтандыру керек", "HEALTH_INSURANCE_DMS", "kz"],
+        ["Страхование жизни", "LIFE_INSURANCE", "ru"],
+        ["Өмірді сақтандыру", "LIFE_INSURANCE", "kz"],
+        ["Нужна страховка по кредиту", "CREDIT_INSURANCE", "ru"],
+        ["Кепіл мүлкін сақтандыру", "CREDIT_INSURANCE", "kz"],
+        ["Карта не работает", "CARD_PAYMENT_ISSUE", "ru"],
+        ["Карта жұмыс істемейді", "CARD_PAYMENT_ISSUE", "kz"],
+        ["Скачать полис PDF", "POLICY_DOWNLOAD_PDF", "ru"],
+        ["Нужна страховка для визы", "TRAVEL_INSURANCE", "ru"],
+        ["Расчёт ОСАГО", "OSAGO_CALCULATE", "ru"],
+        ["Автокөлікті сақтандыру", "OSAGO_CALCULATE", "kz"],
+        ["Жол апатына түстім", "CLAIM_REPORT_ACCIDENT", "kz"],
+        ["Төлем мәртебесі қандай?", "PAYMENT_STATUS_CHECK", "kz"],
+        ["Каско на Hyundai Tucson 2023 года", "CASCO_QUOTE", "ru"],
+        ["Полис", "CLARIFY", "ru"],
+        ["<img src=x onerror=alert(1)>", "CLARIFY", "ru"],
+        ["Визажист записал меня завтра", "CLARIFY", "ru"],
+        ["Переадресация звонков не работает", "CLARIFY", "ru"],
+        ["Мне нужна страховка", "CLARIFY", "ru"],
+        ["Хочу КАСКО и страховку для визы", "CLARIFY", "ru"],
+      ].map(([text, expected_id, lang], i) => ({
+        id: ORIGINAL_CASES.length + i + 1,
+        text,
+        expected_id,
+        lang,
+      }));
+      const TEST_CASES = [...ORIGINAL_CASES, ...EXTRA_CASES];
+      const $ = (id) => document.getElementById(id);
+      const SETTINGS_KEY = "halyk-router-v4-settings";
+      const DEFAULT_SETTINGS = {
+        speechLanguage: "ru-RU",
+        ttsEnabled: false,
+        voiceURI: "",
+      };
+      const state = {
+        settings: { ...DEFAULT_SETTINGS },
+        logs: [],
+        context: null,
+        recognition: null,
+        mic: "idle",
+        micSession: 0,
+        sendAfterStop: false,
+        recognitionFailed: false,
+        transcript: "",
+        finalTranscript: "",
+        baseInput: "",
+        toastTimer: null,
+        benchmarkRunning: false,
+        busy: false,
+      };
+      const scenarioName = (id) =>
+        SCENARIOS.find((s) => s.id === id)?.name ||
+        { CLARIFY: "Уточнение запроса", GREETING: "Приветствие" }[id] ||
+        id;
+      const langName = (lang) =>
+        ({ ru: "RU", kz: "KZ", mixed: "KZ + RU" })[lang] || "—";
+      function notify(text) {
+        $("toast").textContent = text;
+        $("toast").hidden = false;
+        clearTimeout(state.toastTimer);
+        state.toastTimer = setTimeout(() => ($("toast").hidden = true), 4500);
+      }
+      function loadSettings() {
+        try {
+          const saved = JSON.parse(
+            localStorage.getItem(SETTINGS_KEY) || "null",
+          );
+          if (saved && typeof saved === "object")
+            state.settings = {
+              speechLanguage: ["ru-RU", "kk-KZ"].includes(saved.speechLanguage)
+                ? saved.speechLanguage
+                : "ru-RU",
+              ttsEnabled: saved.ttsEnabled === true,
+              voiceURI:
+                typeof saved.voiceURI === "string" ? saved.voiceURI : "",
+            };
+        } catch {
+          /* Storage may be unavailable in private mode or for file URLs. */
+        }
+      }
+      function addMessage(role, text) {
+        const item = document.createElement("div");
+        item.className = "message" + (role === "user" ? " user" : "");
+        const label = document.createElement("small");
+        label.textContent = role === "user" ? "Вы" : "Ассистент · демо";
+        item.append(label, document.createTextNode(text));
+        $("dialogBox").append(item);
+        while ($("dialogBox").children.length > 100)
+          $("dialogBox").firstElementChild.remove();
+        $("dialogBox").scrollTop = $("dialogBox").scrollHeight;
+      }
+      function responseFor(route) {
+        const kz = route.lang === "kz";
+        if (route.id === "GREETING")
+          return kz
+            ? "Сәлеметсіз бе! Қандай сұрағыңыз бар?"
+            : "Здравствуйте! Какой вопрос хотите решить?";
+        if (route.id === "CLARIFY")
+          return kz
+            ? "Сұрағыңызды нақтылаңыз: полис, төлем, сақтандыру жағдайы немесе оператор?"
+            : "Уточните, пожалуйста, тему: полис, оплата, страховой случай или оператор?";
+        if (route.id === "OPERATOR_HANDOVER")
+          return kz
+            ? "Оператормен сөйлесу сұрауы анықталды. Бұл демо: нақты қосылу орындалмайды."
+            : "Определён запрос на оператора. В деморежиме соединение не выполняется.";
+        if (route.id === "CASCO_QUOTE")
+          return kz
+            ? "КАСКО сұрауы анықталды. Көліктің маркасы мен шығарылған жылын көрсетіңіз. Нақты есептеу орындалмайды."
+            : "Выбран расчёт КАСКО. Можно уточнить модель и год автомобиля. Стоимость в деморежиме не рассчитывается.";
+        if (route.id === "TRAVEL_INSURANCE")
+          return kz
+            ? "Саяхат сақтандыруы таңдалды. Ел мен сапар ұзақтығын көрсетіңіз. Бұл тек демонстрация."
+            : "Выбрано страхование путешествия. Можно уточнить страну и количество дней. Это демонстрация маршрута.";
+        return kz
+          ? "Сұрау бағыты анықталды. Сценарий атауы оң жақта көрсетілген. Бұл демонстрация: банк операциялары орындалмайды."
+          : `Выбран сценарий «${scenarioName(route.id)}». Это демонстрация маршрута: изменения и банковские операции не выполняются.`;
+      }
+      function renderRoute(route, ms) {
+        $("routeName").textContent = scenarioName(route.id);
+        $("routeId").textContent = route.id;
+        $("routePath").textContent = route.path;
+        $("routeReason").textContent = route.reason;
+        $("routeTime").textContent = `${ms.toFixed(2)} мс`;
+        $("routeLang").textContent = langName(route.lang);
+        $("routeScore").textContent = String(route.score);
+        $("params").textContent = JSON.stringify(route.params, null, 2);
+        $("slaProgress").value = Math.min(ms, 500);
+        $("slaText").textContent =
+          ms < 500 ? "В пределах порога" : "Порог превышен";
+        $("slaText").className = ms < 500 ? "ok" : "bad";
+        $("alternatives").replaceChildren();
+        for (const alt of route.alternatives) {
+          const li = document.createElement("li");
+          li.textContent = `${scenarioName(alt.id)} · ${alt.score} балл(ов)`;
+          $("alternatives").append(li);
+        }
+        if (!route.alternatives.length) {
+          const li = document.createElement("li");
+          li.textContent = "Других совпадений нет";
+          $("alternatives").append(li);
+        }
+      }
+      function resetTrace() {
+        for (const id of ["routeId", "routeTime", "routeLang", "routeScore"])
+          $(id).textContent = "—";
+        $("routeName").textContent = "Начните диалог";
+        $("routePath").textContent = "Ожидание";
+        $("routeReason").textContent =
+          "Здесь появятся совпадения, параметры и альтернативные намерения.";
+        $("params").textContent = "{}";
+        $("slaProgress").value = 0;
+        $("slaText").textContent = "Нет замера";
+        $("slaText").className = "";
+        $("alternatives").replaceChildren();
+        const li = document.createElement("li");
+        li.textContent = "Нет данных";
+        $("alternatives").append(li);
+      }
+      function redact(text) {
+        return text
+          .replace(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi, "[email скрыт]")
+          .replace(/(?<!\d)\+?(?:\d[ -]*){10,18}\d(?!\d)/g, "[номер скрыт]");
+      }
+      function sendUtterance() {
+        if (state.busy) return;
+        const text = $("userInput").value.trim();
+        if (!text) {
+          notify("Введите текст обращения.");
+          return;
+        }
+        if (text.length > 2000) {
+          notify("Максимальная длина — 2000 символов.");
+          return;
+        }
+        stopRecognition(false);
+        state.busy = true;
+        $("sendButton").disabled = true;
+        try {
+          const start = performance.now();
+          const route = routeText(text, state.context),
+            ms = performance.now() - start;
+          state.context = SCENARIOS.some((s) => s.id === route.id)
+            ? route
+            : null;
+          addMessage("user", text);
+          const response = responseFor(route);
+          addMessage("assistant", response);
+          $("userInput").value = "";
+          renderRoute(route, ms);
+          state.logs.unshift({
+            timestamp: new Date().toISOString(),
+            utterance: redact(text),
+            ...route,
+            latencyMs: ms,
+          });
+          state.logs = state.logs.slice(0, 200);
+          renderLogs();
+          speak(response, route.lang);
+        } catch (error) {
+          console.error("Routing failed", error);
+          notify("Не удалось обработать реплику. Попробуйте ещё раз.");
+        } finally {
+          state.busy = false;
+          $("sendButton").disabled = false;
+        }
+      }
+      function switchTab(id, focus = false) {
+        for (const tab of document.querySelectorAll("[role=tab]")) {
+          const active = tab.dataset.tab === id;
+          tab.setAttribute("aria-selected", String(active));
+          tab.tabIndex = active ? 0 : -1;
+          $(tab.dataset.tab).hidden = !active;
+          if (active && focus) tab.focus();
+        }
+      }
+      function cell(row, text, className = "") {
+        const td = document.createElement("td");
+        td.textContent = text;
+        td.className = className;
+        row.append(td);
+        return td;
+      }
+      function emptyRow(body, message, colspan) {
+        const tr = document.createElement("tr");
+        const td = cell(tr, message, "empty");
+        td.colSpan = colspan;
+        body.append(tr);
+      }
+      function renderLogs() {
+        const total = state.logs.length;
+        $("kpiTotal").textContent = total;
+        $("kpiOperator").textContent = state.logs.filter(
+          (l) => l.id === "OPERATOR_HANDOVER",
+        ).length;
+        $("kpiRouted").textContent = total
+          ? `${Math.round((state.logs.filter((l) => !["GREETING", "CLARIFY"].includes(l.id)).length / total) * 100)}%`
+          : "—";
+        $("kpiLatency").textContent = total
+          ? `${(state.logs.reduce((sum, l) => sum + l.latencyMs, 0) / total).toFixed(2)} мс`
+          : "—";
+        const q = normalize($("logSearch").value);
+        const logs = state.logs.filter((l) =>
+          normalize(
+            l.utterance + " " + l.id + " " + scenarioName(l.id),
+          ).includes(q),
+        );
+        const body = $("logRows");
+        body.replaceChildren();
+        if (!logs.length)
+          emptyRow(
+            body,
+            total
+              ? "Ничего не найдено."
+              : "Журнал пока пуст. Отправьте реплику в симуляторе.",
+            6,
+          );
+        for (const log of logs) {
+          const tr = document.createElement("tr");
+          cell(tr, new Date(log.timestamp).toLocaleTimeString("ru-RU"));
+          cell(tr, log.utterance, "utterance");
+          cell(tr, log.id, "mono");
+          cell(tr, langName(log.lang));
+          cell(tr, String(log.score));
+          cell(tr, log.latencyMs.toFixed(2));
+          body.append(tr);
+        }
+        $("exportLogs").disabled = !total;
+        $("clearLogs").disabled = !total;
+      }
+      function renderCatalog() {
+        const q = normalize($("scenarioSearch").value);
+        const list = SCENARIOS.filter((s) =>
+          normalize(
+            [s.id, s.name, s.category, s.description].join(" "),
+          ).includes(q),
+        );
+        $("catalogCount").textContent =
+          `Показано ${list.length} из ${SCENARIOS.length} сценариев с правилами. Параметры ниже описывают будущий API-контракт.`;
+        const grid = $("scenarioGrid");
+        grid.replaceChildren();
+        for (const s of list) {
+          const card = document.createElement("article");
+          card.className = "panel";
+          const category = document.createElement("span");
+          category.className = "pill";
+          category.textContent = s.category;
+          const h = document.createElement("h3");
+          h.textContent = s.name;
+          const id = document.createElement("div");
+          id.className = "mono";
+          id.textContent = s.id;
+          const p = document.createElement("p");
+          p.textContent = s.description;
+          const params = document.createElement("div");
+          params.className = "inset mono";
+          params.textContent = s.parameters.join(" · ");
+          card.append(category, h, p, id, params);
+          grid.append(card);
+        }
+        if (!list.length) {
+          const p = document.createElement("p");
+          p.className = "empty";
+          p.textContent = "Сценарии не найдены. Измените поисковый запрос.";
+          grid.append(p);
+        }
+      }
+      async function runBenchmark() {
+        if (state.benchmarkRunning) return;
+        state.benchmarkRunning = true;
+        $("runBenchmark").disabled = true;
+        $("runBenchmark").textContent = "Проверка…";
+        const body = $("benchRows");
+        body.replaceChildren();
+        let correct = 0,
+          kzTotal = 0,
+          kzCorrect = 0,
+          sum = 0;
+        try {
+          for (let i = 0; i < TEST_CASES.length; i++) {
+            const test = TEST_CASES[i];
+            const start = performance.now();
+            const route = routeText(test.text);
+            sum += performance.now() - start;
+            const match = route.id === test.expected_id;
+            correct += Number(match);
+            if (test.lang !== "ru") {
+              kzTotal++;
+              kzCorrect += Number(match);
+            }
+            const tr = document.createElement("tr");
+            cell(tr, String(i + 1));
+            cell(tr, test.text, "utterance");
+            cell(tr, test.expected_id, "mono");
+            cell(tr, route.id, "mono");
+            cell(tr, match ? "✓ Пройден" : "✕ Ошибка", match ? "ok" : "bad");
+            body.append(tr);
+            $("benchStatus").textContent =
+              `Проверено ${i + 1} из ${TEST_CASES.length}`;
+            if (i % 10 === 0)
+              await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+          $("benchAccuracy").textContent =
+            `${correct}/${TEST_CASES.length} · ${Math.round((correct / TEST_CASES.length) * 100)}%`;
+          $("benchKz").textContent = kzTotal
+            ? `${kzCorrect}/${kzTotal} · ${Math.round((kzCorrect / kzTotal) * 100)}%`
+            : "—";
+          $("benchLatency").textContent =
+            `${(sum / TEST_CASES.length).toFixed(2)} мс`;
+          $("benchStatus").textContent =
+            `Завершено. ${TEST_CASES.length - correct} ошибок. Контрольная выборка не заменяет проверку на реальных звонках.`;
+        } catch (error) {
+          console.error(error);
+          $("benchStatus").textContent = "Проверка прервана из-за ошибки.";
+        } finally {
+          state.benchmarkRunning = false;
+          $("runBenchmark").disabled = false;
+          $("runBenchmark").textContent = "Запустить проверку";
+        }
+      }
+      function exportLogs() {
+        const blob = new Blob(
+          [
+            JSON.stringify(
+              {
+                version: "4.0",
+                mode: "local-demo",
+                exportedAt: new Date().toISOString(),
+                logs: state.logs,
+              },
+              null,
+              2,
+            ),
+          ],
+          { type: "application/json;charset=utf-8" },
+        );
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "halyk-router-session.json";
+        document.body.append(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+      function populateVoices() {
+        const select = $("voiceSelect");
+        const previous = select.value;
+        select.replaceChildren(new Option("Автоматически по языку", ""));
+        for (const voice of window.speechSynthesis?.getVoices() || [])
+          select.add(
+            new Option(`${voice.name} (${voice.lang})`, voice.voiceURI),
+          );
+        select.value = previous || state.settings.voiceURI;
+        if (select.selectedIndex < 0) select.value = "";
+      }
+      function speak(text, lang) {
+        if (
+          !state.settings.ttsEnabled ||
+          !window.speechSynthesis ||
+          state.mic !== "idle"
+        )
+          return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang === "kz" ? "kk-KZ" : "ru-RU";
+        const voices = window.speechSynthesis.getVoices();
+        const voice =
+          voices.find((v) => v.voiceURI === state.settings.voiceURI) ||
+          voices.find((v) =>
+            v.lang.toLowerCase().startsWith(utterance.lang.slice(0, 2)),
+          );
+        if (voice) utterance.voice = voice;
+        utterance.onerror = (e) => {
+          if (!["canceled", "interrupted"].includes(e.error))
+            notify("Озвучивание недоступно. Ответ остаётся в диалоге.");
+        };
+        window.speechSynthesis.speak(utterance);
+      }
+      function micUI(status) {
+        state.mic = status;
+        const active = status !== "idle";
+        $("micButton").setAttribute("aria-pressed", String(active));
+        $("micButton").textContent = active ? "■ Остановить" : "● Запись";
+        $("micStatus").textContent = {
+          idle: "Текстовый ввод готов",
+          starting: "Подключение микрофона…",
+          listening: "Идёт распознавание",
+          stopping: "Завершение записи…",
+        }[status];
+        $("voicePanel").classList.toggle("recording", status === "listening");
+        $("userInput").readOnly = active;
+        $("sendButton").disabled = active;
+        $("micButton").disabled = status === "stopping";
+        for (const b of document.querySelectorAll("[data-example]"))
+          b.disabled = active;
+      }
+      function stopRecognition(submit) {
+        const rec = state.recognition;
+        if (!rec) return;
+        state.sendAfterStop = submit;
+        if (submit) {
+          micUI("stopping");
+          try {
+            rec.stop();
+          } catch {
+            state.sendAfterStop = false;
+            state.recognition = null;
+            state.micSession++;
+            micUI("idle");
+          }
+        } else {
+          state.micSession++;
+          state.recognition = null;
+          try {
+            rec.abort();
+          } catch {}
+          micUI("idle");
+        }
+      }
+      function startRecognition() {
+        if (state.mic !== "idle") {
+          stopRecognition(true);
+          return;
+        }
+        const Speech =
+          window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!Speech) {
+          notify(
+            "Распознавание речи не поддерживается. Используйте текстовый ввод.",
+          );
+          return;
+        }
+        window.speechSynthesis?.cancel();
+        const rec = new Speech();
+        const session = ++state.micSession;
+        state.recognition = rec;
+        state.recognitionFailed = false;
+        state.sendAfterStop = true;
+        state.transcript = "";
+        state.finalTranscript = "";
+        state.baseInput = $("userInput").value;
+        rec.lang = state.settings.speechLanguage;
+        rec.continuous = false;
+        rec.interimResults = true;
+        micUI("starting");
+        rec.onstart = () => {
+          if (session === state.micSession) micUI("listening");
+        };
+        rec.onresult = (event) => {
+          if (session !== state.micSession) return;
+          let transcript = "";
+          let finalTranscript = "";
+          for (let i = 0; i < event.results.length; i++) {
+            const part = event.results[i][0].transcript + " ";
+            transcript += part;
+            if (event.results[i].isFinal) finalTranscript += part;
+          }
+          state.transcript = transcript.trim();
+          state.finalTranscript = finalTranscript.trim();
+          $("userInput").value = (state.baseInput + " " + state.transcript)
+            .trim()
+            .slice(0, 2000);
+        };
+        rec.onerror = (event) => {
+          if (session !== state.micSession) return;
+          state.recognitionFailed = true;
+          state.sendAfterStop = false;
+          const messages = {
+            "not-allowed":
+              "Доступ к микрофону запрещён. Разрешите его в настройках браузера.",
+            "service-not-allowed": "Сервис распознавания недоступен.",
+            "audio-capture": "Микрофон не найден.",
+            network: "Ошибка сети сервиса распознавания.",
+            "no-speech": "Речь не обнаружена. Попробуйте ещё раз.",
+            "language-not-supported":
+              "Выбранный язык не поддерживается сервисом распознавания.",
+          };
+          if (event.error !== "aborted")
+            notify(
+              messages[event.error] ||
+                "Не удалось распознать речь. Используйте текстовый ввод.",
+            );
+          state.recognition = null;
+          state.micSession++;
+          micUI("idle");
+          try {
+            rec.abort();
+          } catch {}
+        };
+        rec.onend = () => {
+          if (session !== state.micSession) return;
+          state.recognition = null;
+          state.micSession++;
+          micUI("idle");
+          const submit =
+            state.sendAfterStop &&
+            !state.recognitionFailed &&
+            Boolean(state.finalTranscript);
+          state.sendAfterStop = false;
+          if (submit) {
+            $("userInput").value = (state.baseInput + " " + state.finalTranscript)
+              .trim()
+              .slice(0, 2000);
+            sendUtterance();
+          } else if (state.transcript && !state.recognitionFailed) {
+            notify("Распознавание не завершилось. Проверьте текст и отправьте вручную.");
+          }
+        };
+        try {
+          rec.start();
+        } catch {
+          state.recognition = null;
+          state.micSession++;
+          micUI("idle");
+          notify("Не удалось запустить микрофон. Используйте текстовый ввод.");
+        }
+      }
+      function openSettings() {
+        stopRecognition(false);
+        populateVoices();
+        $("speechLanguage").value = state.settings.speechLanguage;
+        $("ttsEnabled").checked = state.settings.ttsEnabled;
+        $("voiceSelect").value = state.settings.voiceURI;
+        if ($("voiceSelect").selectedIndex < 0) $("voiceSelect").value = "";
+        $("settingsDialog").showModal();
+      }
+      function init() {
+        loadSettings();
+        renderCatalog();
+        renderLogs();
+        addMessage(
+          "assistant",
+          "Армысыз! Здравствуйте! Это симулятор маршрутизации. Опишите вопрос, используя тестовые данные.",
+        );
+        for (let i = 0; i < 35; i++) {
+          const bar = document.createElement("span");
+          bar.style.setProperty(
+            "--h",
+            `${8 + Math.round(Math.abs(Math.sin(i * 1.3)) * 31)}px`,
+          );
+          bar.style.setProperty("--d", `${(i % 7) * -0.1}s`);
+          $("wave").append(bar);
+        }
+        for (const tab of document.querySelectorAll("[role=tab]")) {
+          tab.addEventListener("click", () => switchTab(tab.dataset.tab));
+          tab.addEventListener("keydown", (event) => {
+            const tabs = [...document.querySelectorAll("[role=tab]")];
+            let index = tabs.indexOf(tab);
+            if (event.key === "ArrowRight") index = (index + 1) % tabs.length;
+            else if (event.key === "ArrowLeft")
+              index = (index + tabs.length - 1) % tabs.length;
+            else if (event.key === "Home") index = 0;
+            else if (event.key === "End") index = tabs.length - 1;
+            else return;
+            event.preventDefault();
+            switchTab(tabs[index].dataset.tab, true);
+          });
+        }
+        $("inputForm").addEventListener("submit", (event) => {
+          event.preventDefault();
+          sendUtterance();
+        });
+        $("userInput").addEventListener("keydown", (event) => {
+          if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+            event.preventDefault();
+            if (state.mic === "idle") sendUtterance();
+          }
+        });
+        for (const b of document.querySelectorAll("[data-example]"))
+          b.addEventListener("click", () => {
+            $("userInput").value =
+              ORIGINAL_CASES[Number(b.dataset.example)].text;
+            $("userInput").focus();
+          });
+        $("clearChat").addEventListener("click", () => {
+          stopRecognition(false);
+          window.speechSynthesis?.cancel();
+          state.context = null;
+          $("userInput").value = "";
+          $("dialogBox").replaceChildren();
+          resetTrace();
+          addMessage(
+            "assistant",
+            "Диалог очищен. Задайте новый вопрос. / Сұрағыңызды қойыңыз.",
+          );
+        });
+        $("micButton").addEventListener("click", startRecognition);
+        $("scenarioSearch").addEventListener("input", renderCatalog);
+        $("logSearch").addEventListener("input", renderLogs);
+        $("clearLogs").addEventListener("click", () => {
+          state.logs = [];
+          renderLogs();
+          notify("Журнал очищен.");
+        });
+        $("exportLogs").addEventListener("click", exportLogs);
+        $("runBenchmark").addEventListener("click", runBenchmark);
+        $("settingsButton").addEventListener("click", openSettings);
+        for (const id of ["closeSettings", "cancelSettings"])
+          $(id).addEventListener("click", () => $("settingsDialog").close());
+        $("settingsForm").addEventListener("submit", (event) => {
+          event.preventDefault();
+          state.settings = {
+            speechLanguage: $("speechLanguage").value,
+            ttsEnabled: $("ttsEnabled").checked,
+            voiceURI: $("voiceSelect").value,
+          };
+          let persisted = true;
+          try {
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
+          } catch {
+            persisted = false;
+          }
+          if (!state.settings.ttsEnabled) window.speechSynthesis?.cancel();
+          $("settingsDialog").close();
+          notify(
+            persisted
+              ? "Настройки сохранены."
+              : "Настройки применены на эту сессию: хранилище недоступно.",
+          );
+        });
+        if (window.speechSynthesis) {
+          populateVoices();
+          window.speechSynthesis.addEventListener(
+            "voiceschanged",
+            populateVoices,
+          );
+        } else {
+          $("ttsEnabled").disabled = true;
+          $("voiceSelect").disabled = true;
+        }
+        if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
+          $("micButton").disabled = true;
+          $("speechHint").textContent =
+            "Этот браузер не поддерживает голосовой ввод. Все сценарии доступны через текст.";
+        }
+        window.addEventListener("pagehide", () => {
+          stopRecognition(false);
+          window.speechSynthesis?.cancel();
+        });
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden) {
+            stopRecognition(false);
+            window.speechSynthesis?.cancel();
+          }
+        });
+      }
+      init();
+    </script>
+  </body>
+</html>

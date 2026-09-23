@@ -866,7 +866,13 @@
                 Выбранный режим ИИ · до 45 платных запросов
               </option>
             </select>
+            <label for="benchmarkSize">Объём проверки</label
+            ><select id="benchmarkSize">
+              <option value="45">Все 45 реплик</option>
+              <option value="10">Первые 10 реплик</option>
+            </select>
             <div class="row">
+              <button id="exportBenchmark" disabled>Скачать отчёт</button>
               <button class="primary" id="runBenchmark">
                 Запустить проверку</button
               ><button id="cancelBenchmark" hidden>Остановить</button>
@@ -897,11 +903,12 @@
                 <th scope="col">Ожидание</th>
                 <th scope="col">Результат</th>
                 <th scope="col">Проверка</th>
+                <th scope="col">Пояснение / ошибка</th>
               </tr>
             </thead>
             <tbody id="benchRows">
               <tr>
-                <td colspan="5" class="empty">
+                <td colspan="6" class="empty">
                   Запустите проверку, чтобы увидеть результаты.
                 </td>
               </tr>
@@ -912,7 +919,7 @@
     </main>
     <footer>
       <span>Halyk Voice Router · Демонстрационный прототип</span
-      ><span>v4.1 · ИИ + правила · RU / KZ</span>
+      ><span>v4.2 · ИИ + правила · RU / KZ</span>
     </footer>
     <dialog id="settingsDialog" aria-labelledby="settingsTitle">
       <form id="settingsForm">
@@ -1003,6 +1010,48 @@
           ИИ получает текст обращения и контекст диалога. Убедитесь, что URL
           принадлежит вашему сервису. Запросы тарифицируются провайдером. Для
           прямого подключения сервис должен разрешать CORS.
+        </p>
+        <div>
+          <label for="speechEngine">Способ голосового ввода</label
+          ><select id="speechEngine">
+            <option value="auto">Авто: браузер → API при сетевой ошибке</option>
+            <option value="api">API речи · запись и распознавание</option>
+            <option value="browser">Только сервис браузера</option>
+          </select>
+        </div>
+        <div>
+          <label for="sttEndpoint">URL API речи (необязательно)</label
+          ><input
+            id="sttEndpoint"
+            type="url"
+            placeholder="Тот же сервис, что и API модели"
+            autocomplete="off"
+          /><small
+            >Формат /v1/audio/transcriptions. Если ваш чат-сервис не
+            поддерживает аудио, укажите отдельный сервис речи.</small
+          >
+        </div>
+        <div>
+          <label for="sttModel">Модель распознавания речи</label
+          ><input id="sttModel" value="whisper-1" maxlength="200" required />
+        </div>
+        <div>
+          <label for="sttKey">Отдельный API-ключ речи (необязательно)</label
+          ><input
+            id="sttKey"
+            type="password"
+            autocomplete="off"
+            placeholder="Нужен для другого сервиса речи"
+          /><button type="button" id="clearSttKey">Удалить ключ речи</button
+          ><small
+            >Основной ключ используется только для того же сервиса. Оба ключа
+            хранятся до перезагрузки страницы.</small
+          >
+        </div>
+        <p class="notice">
+          В режиме API аудио отправляется выбранному сервису после остановки
+          записи; запрос тарифицируется. Максимум 60 секунд. При ошибке браузера
+          авторежим переключается на API только при настроенном ключе.
         </p>
         <div>
           <label for="speechLanguage">Язык голосового ввода</label
@@ -1561,6 +1610,9 @@
         model: "",
         jsonMode: true,
         timeoutSeconds: 60,
+        speechEngine: "auto",
+        sttEndpoint: "",
+        sttModel: "whisper-1",
       };
       const state = {
         settings: { ...DEFAULT_SETTINGS },
@@ -1582,6 +1634,11 @@
         requestVersion: 0,
         testController: null,
         benchController: null,
+        audioJob: null,
+        sttKey: "",
+        browserSpeechFailed: false,
+        benchResults: [],
+        benchReport: null,
       };
       const scenarioName = (id) =>
         SCENARIOS.find((s) => s.id === id)?.name ||
@@ -1603,6 +1660,17 @@
           if (saved && typeof saved === "object") {
             state.settings = {
               ...DEFAULT_SETTINGS,
+              speechEngine: ["auto", "browser", "api"].includes(
+                saved.speechEngine,
+              )
+                ? saved.speechEngine
+                : "auto",
+              sttEndpoint:
+                typeof saved.sttEndpoint === "string" ? saved.sttEndpoint : "",
+              sttModel:
+                typeof saved.sttModel === "string"
+                  ? saved.sttModel
+                  : "whisper-1",
               speechLanguage: ["ru-RU", "kk-KZ"].includes(saved.speechLanguage)
                 ? saved.speechLanguage
                 : "ru-RU",
@@ -1829,41 +1897,54 @@
       }
       async function runBenchmark() {
         if (state.benchmarkRunning || state.busy) return;
+        stopRecognition(false);
+        window.speechSynthesis?.cancel();
         const configured = $("benchmarkMode").value === "configured";
         const config = { ...state.settings };
         const key = state.apiKey;
+        const cases =
+          $("benchmarkSize").value === "10"
+            ? TEST_CASES.slice(0, 10)
+            : TEST_CASES;
+        const body = $("benchRows");
+        body.replaceChildren();
+        state.benchResults = [];
+        state.benchReport = null;
+        $("exportBenchmark").disabled = true;
+        for (const id of ["benchAccuracy", "benchKz", "benchLatency"])
+          $(id).textContent = "—";
         if (configured && config.mode !== "local") {
           try {
             assertAIConfig(config, key);
           } catch (error) {
-            $("benchStatus").textContent = error.message;
+            $("benchStatus").textContent =
+              `Проверка не запущена: ${error.message}`;
+            emptyRow(body, "Настройте API и повторите запуск.", 6);
             return;
           }
         }
-        state.benchmarkRunning = true;
         const controller = new AbortController();
         state.benchController = controller;
-        $("runBenchmark").disabled = true;
-        $("settingsButton").disabled = true;
+        state.benchmarkRunning = true;
+        setBusy(false);
         $("benchmarkMode").disabled = true;
+        $("benchmarkSize").disabled = true;
         $("cancelBenchmark").hidden = false;
         $("runBenchmark").textContent = "Проверка…";
-        const body = $("benchRows");
-        body.replaceChildren();
         let correct = 0,
           kzTotal = 0,
           kzCorrect = 0,
           sum = 0,
-          completed = 0,
+          successful = 0,
           failures = 0;
-        for (const id of ["benchAccuracy", "benchKz", "benchLatency"])
-          $(id).textContent = "—";
+        const startedAt = new Date().toISOString();
         try {
-          for (let i = 0; i < TEST_CASES.length; i++) {
+          for (let i = 0; i < cases.length; i++) {
             if (controller.signal.aborted) break;
-            const test = TEST_CASES[i];
+            const test = cases[i];
             const start = performance.now();
-            let route, errorMessage;
+            let route,
+              errorMessage = "";
             try {
               route = configured
                 ? await routeConfigured(test.text, {
@@ -1877,51 +1958,134 @@
               if (controller.signal.aborted) break;
             } catch (error) {
               if (controller.signal.aborted) break;
-              errorMessage = error.message;
-              failures++;
+              errorMessage = error.message || "Неизвестная ошибка запроса";
             }
-            sum += performance.now() - start;
-            completed++;
+            const latencyMs = performance.now() - start;
             const match = route?.id === test.expected_id;
-            correct += Number(match);
-            if (test.lang !== "ru") {
-              kzTotal++;
-              kzCorrect += Number(match);
+            if (errorMessage) failures++;
+            else {
+              successful++;
+              sum += latencyMs;
+              correct += Number(match);
+              if (test.lang !== "ru") {
+                kzTotal++;
+                kzCorrect += Number(match);
+              }
             }
+            const status = errorMessage
+              ? "api_error"
+              : match
+                ? "passed"
+                : "mismatch";
+            state.benchResults.push({
+              id: test.id,
+              text: test.text,
+              language: test.lang,
+              expected: test.expected_id,
+              actual: route?.id || null,
+              status,
+              error: errorMessage,
+              reason: route?.reason || "",
+              alternatives: route?.alternatives || [],
+              path: route?.path || "",
+              latencyMs,
+            });
             const tr = document.createElement("tr");
-            cell(tr, String(i + 1));
+            cell(tr, String(test.id));
             cell(tr, test.text, "utterance");
             cell(tr, test.expected_id, "mono");
-            cell(tr, route?.id || errorMessage, "mono");
-            cell(tr, match ? "✓ Пройден" : "✕ Ошибка", match ? "ok" : "bad");
+            cell(tr, route?.id || "Нет ответа", "mono");
+            cell(
+              tr,
+              errorMessage
+                ? "Сбой запроса"
+                : match
+                  ? "✓ Пройден"
+                  : "Не совпало",
+              errorMessage ? "bad" : match ? "ok" : "warn",
+            );
+            cell(tr, errorMessage || route.reason, "utterance");
             body.append(tr);
             $("benchStatus").textContent =
-              `Проверено ${completed} из ${TEST_CASES.length}`;
-            // Stop on API failure to avoid spending the entire batch on a broken configuration.
+              `Обработано ${state.benchResults.length}/${cases.length}: совпадений ${correct}, несовпадений ${successful - correct}, сбоев API ${failures}.`;
             if (errorMessage) break;
-            if (i % 10 === 0)
+            if (configured && config.mode !== "local")
+              await new Promise((resolve) => {
+                if (controller.signal.aborted) {
+                  resolve();
+                  return;
+                }
+                const done = () => {
+                  clearTimeout(timer);
+                  controller.signal.removeEventListener("abort", done);
+                  resolve();
+                };
+                const timer = setTimeout(done, 300);
+                controller.signal.addEventListener("abort", done, {
+                  once: true,
+                });
+              });
+            else if (i % 10 === 0)
               await new Promise((resolve) => setTimeout(resolve, 0));
           }
-          $("benchAccuracy").textContent = completed
-            ? `${correct}/${completed} · ${Math.round((correct / completed) * 100)}%`
+          $("benchAccuracy").textContent = successful
+            ? `${correct}/${successful} · ${Math.round((correct / successful) * 100)}%`
             : "—";
           $("benchKz").textContent = kzTotal
             ? `${kzCorrect}/${kzTotal} · ${Math.round((kzCorrect / kzTotal) * 100)}%`
             : "—";
-          $("benchLatency").textContent = completed
-            ? `${(sum / completed).toFixed(2)} мс`
+          $("benchLatency").textContent = successful
+            ? `${(sum / successful).toFixed(2)} мс`
             : "—";
+          const summary = {
+            requested: cases.length,
+            received: successful,
+            passed: correct,
+            mismatches: successful - correct,
+            apiErrors: failures,
+            notProcessed: cases.length - state.benchResults.length,
+            cancelled: controller.signal.aborted,
+          };
+          state.benchReport = {
+            version: "4.2",
+            startedAt,
+            engine: configured ? config.mode : "local",
+            model: configured && config.mode !== "local" ? config.model : null,
+            summary,
+            results: state.benchResults,
+          };
           $("benchStatus").textContent =
-            `${controller.signal.aborted ? "Остановлено" : failures ? "Прервано из-за ошибки API" : "Завершено"}. Проверено ${completed}/${TEST_CASES.length}; несовпадений: ${completed - correct}. Движок: ${configured ? config.mode + " / " + (config.model || "правила") : "локальные правила"}.`;
+            `${controller.signal.aborted ? "Остановлено" : failures ? "Прервано из-за ошибки API" : "Завершено"}. Ответов: ${successful}/${cases.length}; несовпадений: ${successful - correct}; сбоев API: ${failures}; не обработано: ${summary.notProcessed}. Точность считается только по полученным ответам. Несовпадение означает другой сценарий, а не сбой приложения.`;
+          if (!state.benchResults.length)
+            emptyRow(body, "Проверка остановлена до получения ответа.", 6);
+        } catch (error) {
+          $("benchStatus").textContent =
+            `Ошибка выполнения проверки: ${error.message}`;
         } finally {
           state.benchmarkRunning = false;
           state.benchController = null;
-          $("runBenchmark").disabled = false;
-          $("settingsButton").disabled = false;
+          setBusy(false);
           $("benchmarkMode").disabled = false;
+          $("benchmarkSize").disabled = false;
           $("cancelBenchmark").hidden = true;
           $("runBenchmark").textContent = "Запустить проверку";
+          $("exportBenchmark").disabled = !state.benchResults.length;
         }
+      }
+      function exportBenchmark() {
+        if (!state.benchReport) return;
+        const url = URL.createObjectURL(
+          new Blob([JSON.stringify(state.benchReport, null, 2)], {
+            type: "application/json;charset=utf-8",
+          }),
+        );
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "halyk-benchmark-report.json";
+        document.body.append(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
 
       function exportLogs() {
@@ -1929,7 +2093,7 @@
           [
             JSON.stringify(
               {
-                version: "4.1",
+                version: "4.2",
                 mode: state.settings.mode,
                 exportedAt: new Date().toISOString(),
                 logs: state.logs,
@@ -1993,15 +2157,23 @@
           starting: "Подключение микрофона…",
           listening: "Идёт распознавание",
           stopping: "Завершение записи…",
+          recording: "Запись через API",
+          transcribing: "Распознаём через API…",
         }[status];
-        $("voicePanel").classList.toggle("recording", status === "listening");
+        $("voicePanel").classList.toggle(
+          "recording",
+          ["listening", "recording"].includes(status),
+        );
         $("userInput").readOnly = active;
-        $("sendButton").disabled = active;
+        $("sendButton").disabled =
+          active || state.busy || state.benchmarkRunning;
         $("micButton").disabled = status === "stopping";
+        if (status === "transcribing")
+          $("micButton").textContent = "Отменить распознавание";
         for (const b of document.querySelectorAll("[data-example]"))
           b.disabled = active;
       }
-      function stopRecognition(submit) {
+      function stopBrowserRecognition(submit) {
         const rec = state.recognition;
         if (!rec) return;
         state.sendAfterStop = submit;
@@ -2024,7 +2196,7 @@
           micUI("idle");
         }
       }
-      function startRecognition() {
+      function startBrowserRecognition() {
         if (state.busy || state.benchmarkRunning) return;
         if (state.mic !== "idle") {
           stopRecognition(true);
@@ -2077,17 +2249,17 @@
             "language-not-supported":
               "Выбранный язык не поддерживается сервисом распознавания.",
           };
-          if (event.error !== "aborted")
-            notify(
-              messages[event.error] ||
-                "Не удалось распознать речь. Используйте текстовый ввод.",
-            );
           state.recognition = null;
           state.micSession++;
           micUI("idle");
           try {
             rec.abort();
           } catch {}
+          handleBrowserSpeechError(
+            event.error,
+            messages[event.error] ||
+              "Не удалось распознать речь. Повторите запись.",
+          );
         };
         rec.onend = () => {
           if (session !== state.micSession) return;
@@ -2124,6 +2296,10 @@
         $("apiKey").value = state.apiKey;
         $("jsonMode").checked = state.settings.jsonMode;
         $("apiTimeout").value = state.settings.timeoutSeconds;
+        $("speechEngine").value = state.settings.speechEngine;
+        $("sttEndpoint").value = state.settings.sttEndpoint;
+        $("sttModel").value = state.settings.sttModel;
+        $("sttKey").value = state.sttKey;
         $("connectionStatus").textContent = "";
         $("settingsDialog").showModal();
       }
@@ -2276,8 +2452,14 @@
           speechLanguage: $("speechLanguage").value,
           ttsEnabled: $("ttsEnabled").checked,
           voiceURI: $("voiceSelect").value,
+          speechEngine: $("speechEngine").value,
+          sttEndpoint: $("sttEndpoint").value.trim(),
+          sttModel: $("sttModel").value.trim(),
         };
         if (c.endpoint) endpointURL(c.endpoint);
+        if (c.sttEndpoint) audioEndpoint(c);
+        if (!c.sttModel || c.sttModel.length > 200)
+          throw new RouterError("Укажите модель речи длиной до 200 символов.");
         if (
           !Number.isInteger(c.timeoutSeconds) ||
           c.timeoutSeconds < 10 ||
@@ -2324,16 +2506,22 @@
       }
       function setBusy(busy) {
         state.busy = busy;
-        $("sendButton").disabled = busy;
+        $("sendButton").disabled = busy || state.benchmarkRunning;
         $("sendButton").textContent = busy ? "Обработка…" : "Отправить ↗";
-        $("userInput").readOnly = busy;
+        $("userInput").readOnly = busy || state.benchmarkRunning;
         $("cancelRequest").hidden = !busy;
         $("settingsButton").disabled = busy || state.benchmarkRunning;
         $("runBenchmark").disabled = busy || state.benchmarkRunning;
         $("micButton").disabled =
-          busy || !(window.SpeechRecognition || window.webkitSpeechRecognition);
+          busy ||
+          state.benchmarkRunning ||
+          !(
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition ||
+            (navigator.mediaDevices?.getUserMedia && window.MediaRecorder)
+          );
         for (const b of document.querySelectorAll("[data-example]"))
-          b.disabled = busy;
+          b.disabled = busy || state.benchmarkRunning;
       }
       function cancelActive() {
         state.requestVersion++;
@@ -2666,6 +2854,8 @@ confidence — самооценка от 0 до 1, не гарантия. altern
           if (config.mode !== "local") assertAIConfig(config, key);
           state.settings = config;
           state.apiKey = key;
+          state.sttKey = $("sttKey").value.trim();
+          state.browserSpeechFailed = false;
           let persisted = true;
           try {
             localStorage.setItem(SETTINGS_KEY, JSON.stringify(config));
@@ -2723,8 +2913,344 @@ confidence — самооценка от 0 до 1, не гарантия. altern
         });
       }
 
+      // Audio API reference: https://developers.openai.com/api/reference/resources/audio/subresources/transcriptions/methods/create
+      function audioEndpoint(config = state.settings) {
+        const raw = config.sttEndpoint || config.endpoint;
+        // Reuse URL security checks without changing the caller's endpoint.
+        endpointURL(raw);
+        const url = new URL(raw);
+        url.pathname = url.pathname
+          .replace(/\/+$/, "")
+          .replace(/\/chat\/completions$/, "");
+        if (!url.pathname.endsWith("/audio/transcriptions"))
+          url.pathname += "/audio/transcriptions";
+        return url.href;
+      }
+      function audioConfig() {
+        const config = { ...state.settings };
+        const endpoint = audioEndpoint(config);
+        let key = state.sttKey;
+        if (
+          !key &&
+          config.endpoint &&
+          new URL(endpoint).origin === new URL(config.endpoint).origin
+        )
+          key = state.apiKey;
+        if (
+          !key &&
+          !["localhost", "127.0.0.1", "[::1]"].includes(
+            new URL(endpoint).hostname,
+          )
+        )
+          throw new RouterError(
+            "Для распознавания через API укажите ключ речи в настройках. Основной ключ используется только для того же адреса сервиса.",
+          );
+        if (!config.sttModel?.trim())
+          throw new RouterError(
+            "В настройках укажите модель распознавания речи.",
+          );
+        if (/[\r\n]/.test(key))
+          throw new RouterError(
+            "Ключ речи не должен содержать переносы строк.",
+          );
+        return {
+          endpoint,
+          key,
+          model: config.sttModel,
+          language: config.speechLanguage === "kk-KZ" ? "kk" : "ru",
+          timeout: config.timeoutSeconds,
+        };
+      }
+      function voiceMessage(message) {
+        $("speechHint").textContent = message;
+        notify(message);
+      }
+      function stopAudio(submit) {
+        const job = state.audioJob;
+        if (!job) return;
+        clearTimeout(job.limitTimer);
+        if (submit && job.recorder?.state === "recording") {
+          job.submit = true;
+          micUI("stopping");
+          job.recorder.stop();
+          return;
+        }
+        state.audioJob = null;
+        job.controller.abort();
+        if (job.recorder?.state === "recording") {
+          try {
+            job.recorder.stop();
+          } catch {}
+        }
+        job.stream?.getTracks().forEach((track) => track.stop());
+        micUI("idle");
+      }
+      function stopRecognition(submit) {
+        if (state.audioJob) {
+          stopAudio(submit);
+          return;
+        }
+        stopBrowserRecognition(submit);
+      }
+      async function startRecognition() {
+        if (state.busy || state.benchmarkRunning) return;
+        if (state.mic !== "idle") {
+          stopRecognition(true);
+          return;
+        }
+        if (
+          state.settings.speechEngine === "api" ||
+          (state.settings.speechEngine === "auto" &&
+            (state.browserSpeechFailed ||
+              !(window.SpeechRecognition || window.webkitSpeechRecognition)))
+        ) {
+          await startAudioRecording();
+          return;
+        }
+        startBrowserRecognition();
+      }
+      async function startAudioRecording() {
+        if (state.audioJob || state.busy || state.benchmarkRunning) return;
+        let config;
+        try {
+          config = audioConfig();
+        } catch (error) {
+          voiceMessage(error.message);
+          return;
+        }
+        if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+          voiceMessage(
+            "Запись недоступна в этом окне. Откройте скачанный HTML в отдельной вкладке Chrome/Edge или страницу по HTTPS и разрешите микрофон.",
+          );
+          return;
+        }
+        window.speechSynthesis?.cancel();
+        const job = {
+          controller: new AbortController(),
+          config,
+          chunks: [],
+          size: 0,
+          base: $("userInput").value,
+          submit: false,
+          stream: null,
+          recorder: null,
+        };
+        state.audioJob = job;
+        micUI("starting");
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          if (state.audioJob !== job) {
+            stream.getTracks().forEach((t) => t.stop());
+            return;
+          }
+          job.stream = stream;
+          const type = [
+            "audio/webm;codecs=opus",
+            "audio/webm",
+            "audio/mp4",
+            "audio/ogg;codecs=opus",
+          ].find((t) => MediaRecorder.isTypeSupported(t));
+          if (!type)
+            throw new RouterError(
+              "Браузер не поддерживает формат записи для API. Попробуйте Chrome/Edge.",
+            );
+          const recorder = new MediaRecorder(stream, { mimeType: type });
+          job.recorder = recorder;
+          recorder.ondataavailable = (event) => {
+            if (state.audioJob !== job || !event.data.size) return;
+            job.size += event.data.size;
+            if (job.size > 20 * 1024 * 1024) {
+              stopAudio(false);
+              voiceMessage(
+                "Запись превышает 20 МБ. Запишите короткую реплику.",
+              );
+              return;
+            }
+            job.chunks.push(event.data);
+          };
+          recorder.onerror = () => {
+            if (state.audioJob !== job) return;
+            stopAudio(false);
+            voiceMessage(
+              "Не удалось записать звук. Проверьте микрофон и повторите запись.",
+            );
+          };
+          recorder.onstop = () => finishAudio(job, type);
+          recorder.start(1000);
+          micUI("recording");
+          $("speechHint").textContent =
+            "Идёт запись через API. Говорите, затем нажмите «Остановить». Максимум 60 секунд; аудио отправится выбранному сервису после остановки.";
+          job.limitTimer = setTimeout(() => {
+            if (state.audioJob === job) stopAudio(true);
+          }, 60000);
+        } catch (error) {
+          if (state.audioJob !== job) return;
+          stopAudio(false);
+          voiceMessage(
+            error.name === "NotAllowedError"
+              ? "Доступ к микрофону запрещён. Разрешите его для этой страницы в настройках браузера."
+              : error.name === "NotFoundError"
+                ? "Микрофон не найден. Подключите его и повторите."
+                : error instanceof RouterError
+                  ? error.message
+                  : "Не удалось открыть микрофон. Проверьте, не занят ли он другим приложением.",
+          );
+        }
+      }
+      async function finishAudio(job, type) {
+        clearTimeout(job.limitTimer);
+        job.stream?.getTracks().forEach((t) => t.stop());
+        if (state.audioJob !== job) return;
+        if (!job.submit) {
+          state.audioJob = null;
+          micUI("idle");
+          voiceMessage(
+            "Запись прервана устройством. Проверьте микрофон и повторите.",
+          );
+          return;
+        }
+        let transcript = "";
+        let timedOut = false;
+        let timer;
+        try {
+          const audio = new Blob(job.chunks, { type });
+          job.chunks = [];
+          if (audio.size < 100)
+            throw new RouterError(
+              "Запись слишком короткая. Произнесите фразу и нажмите «Остановить».",
+            );
+          micUI("transcribing");
+          $("speechHint").textContent =
+            "Запись завершена. Распознаём речь через API…";
+          const form = new FormData();
+          const extension = type.includes("mp4")
+            ? "mp4"
+            : type.includes("ogg")
+              ? "ogg"
+              : "webm";
+          form.append("file", audio, `speech.${extension}`);
+          form.append("model", job.config.model);
+          form.append("language", job.config.language);
+          form.append("response_format", "json");
+          timer = setTimeout(() => {
+            timedOut = true;
+            job.controller.abort();
+          }, job.config.timeout * 1000);
+          const headers = {};
+          if (job.config.key)
+            headers.Authorization = `Bearer ${job.config.key}`;
+          const response = await fetch(job.config.endpoint, {
+            method: "POST",
+            headers,
+            body: form,
+            signal: job.controller.signal,
+            credentials: "omit",
+            redirect: "error",
+            referrerPolicy: "no-referrer",
+          });
+          if (!response.ok) {
+            const tips = {
+              401: "Проверьте ключ речи.",
+              403: "Нет доступа к распознаванию.",
+              404: "Сервис не поддерживает этот URL или модель распознавания. Укажите API речи в настройках.",
+              429: "Исчерпан лимит сервиса речи.",
+              400: "Проверьте модель, язык и формат аудио.",
+            };
+            throw new RouterError(
+              `Распознавание: HTTP ${response.status}. ${tips[response.status] || "Сервис речи временно недоступен."}`,
+            );
+          }
+          let payload;
+          try {
+            payload = await response.json();
+          } catch {
+            throw new RouterError("Сервис речи вернул некорректный JSON.");
+          }
+          if (typeof payload.text !== "string" || !payload.text.trim())
+            throw new RouterError(
+              "В записи не распознана речь. Попробуйте говорить ближе к микрофону.",
+            );
+          transcript = payload.text.trim();
+          if (state.audioJob !== job) return;
+          const combined = (job.base + " " + transcript).trim();
+          $("userInput").value = combined.slice(0, 2000);
+          $("speechHint").textContent =
+            combined.length > 2000
+              ? "Текст длиннее 2000 символов и сокращён. Проверьте его перед отправкой."
+              : "Речь распознана. Проверьте текст и нажмите «Отправить».";
+          // Keep recognition and paid routing separate so the user can correct transcription.
+        } catch (error) {
+          if (state.audioJob !== job) return;
+          voiceMessage(
+            timedOut
+              ? "Сервис речи не ответил вовремя. Повторите запись."
+              : error.name === "AbortError"
+                ? "Распознавание отменено."
+                : error instanceof RouterError
+                  ? error.message
+                  : "Не удалось связаться с API речи. Проверьте адрес, сеть и поддержку CORS сервиса.",
+          );
+        } finally {
+          clearTimeout(timer);
+          if (state.audioJob === job) {
+            state.audioJob = null;
+            micUI("idle");
+          }
+        }
+      }
+      function handleBrowserSpeechError(code, message) {
+        if (
+          ["network", "service-not-allowed", "language-not-supported"].includes(
+            code,
+          )
+        ) {
+          state.browserSpeechFailed = true;
+          if (state.settings.speechEngine === "auto") {
+            try {
+              audioConfig();
+              voiceMessage(
+                "Сервис браузера недоступен. Переключаемся на запись через API; повторите фразу после начала записи.",
+              );
+              startAudioRecording();
+              return;
+            } catch (error) {
+              voiceMessage(
+                `Сервис распознавания браузера недоступен. ${error.message}`,
+              );
+              return;
+            }
+          }
+        }
+        if (code !== "aborted") voiceMessage(message);
+      }
+      function initVoiceFix() {
+        $("micButton").disabled = !(
+          window.SpeechRecognition ||
+          window.webkitSpeechRecognition ||
+          (navigator.mediaDevices?.getUserMedia && window.MediaRecorder)
+        );
+        $("speechHint").textContent =
+          "Выберите «API речи» в настройках, если сервис браузера выдаёт ошибку сети. Для API записи: говорите → «Остановить» → проверьте текст → «Отправить».";
+        $("settingsDialog").addEventListener("close", () => {
+          $("sttKey").value = "";
+        });
+        $("clearSttKey").addEventListener("click", () => {
+          state.sttKey = "";
+          $("sttKey").value = "";
+          $("connectionStatus").textContent = "Отдельный ключ речи удалён.";
+        });
+        window.addEventListener("pagehide", () => {
+          stopAudio(false);
+          state.sttKey = "";
+        });
+      }
+
       init();
       initAI();
+      initVoiceFix();
+      $("exportBenchmark").addEventListener("click", exportBenchmark);
     </script>
   </body>
 </html>
